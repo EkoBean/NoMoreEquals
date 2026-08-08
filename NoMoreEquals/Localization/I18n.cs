@@ -1,35 +1,25 @@
-using System;
-
 namespace NoMoreEquals.Localization;
 
 /// <summary>
-/// Resolves UI language from Dalamud's <c>UiLanguage</c>.
-/// Default is English. Chinese UI is used for Dalamud codes <c>tw</c> (Traditional) and <c>zh</c> (Simplified).
-/// Note: Dalamud does not use <c>zh-TW</c>; Traditional Chinese is <c>tw</c>.
+/// Resolves UI language from Dalamud's <c>UiLanguage</c>. Default is English.
+/// Dalamud uses <c>tw</c> for Traditional Chinese and <c>zh</c> for Simplified;
+/// only <c>tw</c> gets the Chinese UI, matching the plugin's stated support.
 /// </summary>
 internal static class I18n
 {
+    private const string TraditionalChinese = "tw";
+    private const string English = "en";
+
     public static UiStrings T { get; private set; } = LocEn.Create();
 
-    public static string CurrentLangCode { get; private set; } = "en";
-
-    public static bool IsChinese => CurrentLangCode is "tw" or "zh";
+    public static string CurrentLangCode { get; private set; } = English;
 
     public static void Apply(string? langCode)
     {
-        var code = string.IsNullOrWhiteSpace(langCode) ? "en" : langCode.Trim().ToLowerInvariant();
-        CurrentLangCode = code;
-        T = IsChineseLanguage(code) ? LocTw.Create() : LocEn.Create();
-    }
+        CurrentLangCode = string.IsNullOrWhiteSpace(langCode)
+            ? English
+            : langCode.Trim().ToLowerInvariant();
 
-    public static bool IsChineseLanguage(string? langCode)
-    {
-        if (string.IsNullOrWhiteSpace(langCode))
-            return false;
-
-        var code = langCode.Trim().ToLowerInvariant();
-        // Dalamud: tw = Traditional Chinese, zh = Simplified Chinese.
-        // Also accept common CultureInfo-style aliases just in case.
-        return code is "tw" or "zh" or "zh-tw" or "zh-hant" or "zh-cn" or "zh-hans";
+        T = CurrentLangCode == TraditionalChinese ? LocTw.Create() : LocEn.Create();
     }
 }

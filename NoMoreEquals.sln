@@ -5,6 +5,14 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoMoreEquals", "NoMoreEquals\NoMoreEquals.csproj", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{D2F4A8B6-1C93-4E57-8B2A-6F1D9C3E5A70}"
+	ProjectSection(SolutionItems) = preProject
+		tools\README.md = tools\README.md
+		tools\generate_candidates.py = tools\generate_candidates.py
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FontProbe", "tools\FontProbe\FontProbe.csproj", "{B7E5A3C1-4D82-4F16-9A3E-7C0D5F2B8E41}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,8 +23,15 @@ Global
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Debug|x64.Build.0 = Debug|x64
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x64.ActiveCfg = Release|x64
 		{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}.Release|x64.Build.0 = Release|x64
+		{B7E5A3C1-4D82-4F16-9A3E-7C0D5F2B8E41}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B7E5A3C1-4D82-4F16-9A3E-7C0D5F2B8E41}.Debug|x64.Build.0 = Debug|Any CPU
+		{B7E5A3C1-4D82-4F16-9A3E-7C0D5F2B8E41}.Release|x64.ActiveCfg = Release|Any CPU
+		{B7E5A3C1-4D82-4F16-9A3E-7C0D5F2B8E41}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B7E5A3C1-4D82-4F16-9A3E-7C0D5F2B8E41} = {D2F4A8B6-1C93-4E57-8B2A-6F1D9C3E5A70}
 	EndGlobalSection
 EndGlobal

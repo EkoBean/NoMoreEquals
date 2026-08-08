@@ -11,7 +11,7 @@ var gamePath = args.Length > 0
     : FfxivLocator.FindInstallPath()
       ?? throw new InvalidOperationException(
           "FFXIV install not found. Pass the game root as argv[0], e.g.\n" +
-          "  dotnet run --project tools/FontProbe/FontProbe -- \"C:\\Path\\To\\FINAL FANTASY XIV - A Realm Reborn\"");
+          "  dotnet run --project tools/FontProbe -- \"C:\\Path\\To\\FINAL FANTASY XIV - A Realm Reborn\"");
 
 var sqpack = Path.Combine(gamePath, "game", "sqpack");
 if (!Directory.Exists(sqpack))
@@ -89,8 +89,6 @@ sb.AppendLine("    {");
 foreach (var (zh, jp) in active)
     sb.AppendLine($"        ['\\u{(int)zh:X4}'] = '\\u{(int)jp:X4}', // {zh} -> {jp}");
 sb.AppendLine("    };");
-sb.AppendLine();
-sb.AppendLine($"    public static int Count => {active.Count};");
 sb.AppendLine("}");
 sb.AppendLine();
 

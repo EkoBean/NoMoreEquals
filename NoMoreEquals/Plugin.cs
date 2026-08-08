@@ -3,7 +3,6 @@ using Dalamud.IoC;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using NoMoreEquals.Data.DefaultMissingGlyphs;
 using NoMoreEquals.Localization;
 using NoMoreEquals.Services;
 using NoMoreEquals.Windows;
@@ -14,6 +13,7 @@ public sealed class Plugin : IDalamudPlugin
 {
     private const string CommandName = "/nme";
     private const string CommandNameLong = "/nomoreequals";
+    private const string CommandHelp = "Open NoMoreEquals settings.";
 
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
@@ -22,12 +22,6 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
 
-    public Configuration Configuration { get; }
-
-    internal KanjiMapService MapService { get; } = new();
-
-    internal PhraseReplacementService PhraseService { get; } = new();
-
     private readonly AxisFontCoverage fontCoverage = new();
     private readonly ChatInputWatcher chatWatcher;
     private readonly WindowSystem windowSystem = new("NoMoreEquals");
@@ -35,13 +29,10 @@ public sealed class Plugin : IDalamudPlugin
 
     public Plugin()
     {
-        this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-        this.Configuration.CustomMappings ??= new();
-        this.Configuration.SeededDefaultGlyphKeys ??= [];
-        this.Configuration.PhraseReplacements ??= [];
+        this.ConfigService = new ConfigService(PluginInterface);
 
-        if (DefaultMissingGlyphMaps.SeedInto(this.Configuration))
-            this.Configuration.Save();
+        if (DefaultGlyphSeeder.SeedInto(this.Configuration))
+            this.ConfigService.Save();
 
         I18n.Apply(PluginInterface.UiLanguage);
         PluginInterface.LanguageChanged += this.OnLanguageChanged;
@@ -60,14 +51,8 @@ public sealed class Plugin : IDalamudPlugin
         this.configWindow = new ConfigWindow(this);
         this.windowSystem.AddWindow(this.configWindow);
 
-        CommandManager.AddHandler(CommandName, new CommandInfo(this.OnCommand)
-        {
-            HelpMessage = "Open NoMoreEquals settings.",
-        });
-        CommandManager.AddHandler(CommandNameLong, new CommandInfo(this.OnCommand)
-        {
-            HelpMessage = "Open NoMoreEquals settings.",
-        });
+        CommandManager.AddHandler(CommandName, new CommandInfo(this.OnCommand) { HelpMessage = CommandHelp });
+        CommandManager.AddHandler(CommandNameLong, new CommandInfo(this.OnCommand) { HelpMessage = CommandHelp });
 
         PluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi += this.ToggleConfigUi;
@@ -75,6 +60,14 @@ public sealed class Plugin : IDalamudPlugin
         Log.Information(
             $"NoMoreEquals ready. lang={I18n.CurrentLangCode}, glyphs={this.MapService.ActiveCount}, phrases={this.PhraseService.EnabledCount}, AXIS={(this.fontCoverage.Loaded ? this.fontCoverage.GlyphCount.ToString() : "n/a")}");
     }
+
+    internal ConfigService ConfigService { get; }
+
+    internal Configuration Configuration => this.ConfigService.Config;
+
+    internal KanjiMapService MapService { get; } = new();
+
+    internal PhraseReplacementService PhraseService { get; } = new();
 
     public void Dispose()
     {
@@ -84,12 +77,12 @@ public sealed class Plugin : IDalamudPlugin
 
         this.chatWatcher.Dispose();
         this.windowSystem.RemoveAllWindows();
-        this.configWindow.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
         CommandManager.RemoveHandler(CommandNameLong);
     }
 
+    /// <summary>Recomputes both conversion tables from the current configuration.</summary>
     internal void RebuildAll()
     {
         if (this.Configuration.UseLiveFontFilter && !this.fontCoverage.Loaded)
@@ -101,20 +94,14 @@ public sealed class Plugin : IDalamudPlugin
             $"NoMoreEquals rebuilt. Glyphs={this.MapService.ActiveCount}, phrases={this.PhraseService.EnabledCount}");
     }
 
-    /// <summary>Legacy name kept for call sites that only touch the glyph map.</summary>
-    internal void RebuildMap() => this.RebuildAll();
+    public void ToggleConfigUi() => this.configWindow.Toggle();
 
     private void OnLanguageChanged(string langCode)
     {
         I18n.Apply(langCode);
         this.configWindow.RefreshWindowTitle();
-        Log.Information($"NoMoreEquals language -> {I18n.CurrentLangCode} (chinese={I18n.IsChinese})");
+        Log.Information($"NoMoreEquals language -> {I18n.CurrentLangCode}");
     }
 
-    private void OnCommand(string command, string args)
-    {
-        this.ToggleConfigUi();
-    }
-
-    public void ToggleConfigUi() => this.configWindow.Toggle();
+    private void OnCommand(string command, string args) => this.ToggleConfigUi();
 }

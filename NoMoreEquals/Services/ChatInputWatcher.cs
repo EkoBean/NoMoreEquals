@@ -82,7 +82,7 @@ internal sealed class ChatInputWatcher : IDisposable
                 return;
 
             var converted = KanjiConverter.ConvertAll(text, this.phraseService, this.mapService.Active);
-            if (ReferenceEquals(converted, text) || converted == text)
+            if (converted == text)
             {
                 this.lastWritten = text;
                 return;

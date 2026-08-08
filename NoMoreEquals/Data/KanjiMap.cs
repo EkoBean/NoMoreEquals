@@ -105,7 +105,5 @@ internal static class KanjiMap
         ['\u9EC3'] = '\u9EC4', // 黃 -> 黄
         ['\u9ED1'] = '\u9ED2', // 黑 -> 黒
     };
-
-    public static int Count => 95;
 }
 

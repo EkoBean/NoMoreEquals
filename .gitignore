@@ -2,5 +2,7 @@
 obj/
 bin/
 *.user
-_tmp_sample/
+*.suo
+
+# Scratch input for tools/generate_candidates.py (see tools/README.md)
 _tmp_opencc/

@@ -4,10 +4,17 @@ using Dalamud.Configuration;
 
 namespace NoMoreEquals;
 
+/// <summary>
+/// Persisted user settings. Plain data only — saving is owned by
+/// <see cref="Services.ConfigService"/>.
+/// </summary>
 [Serializable]
 public class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 3;
+    public int Version { get; set; } = CurrentVersion;
+
+    /// <summary>Latest on-disk schema version understood by this build.</summary>
+    public const int CurrentVersion = 3;
 
     /// <summary>When false, chat input is left unchanged.</summary>
     public bool Enabled { get; set; } = true;
@@ -42,18 +49,18 @@ public class Configuration : IPluginConfiguration
     /// </summary>
     public List<PhraseReplacement> PhraseReplacements { get; set; } = [];
 
-    public void Save()
+    /// <summary>
+    /// Repairs a config deserialized from disk. Collections can come back null from an
+    /// older or hand-edited file, so every consumer downstream can assume non-null.
+    /// Schema changes so far have only added fields with defaults, so stamping the
+    /// version is enough; a real migration would branch on the incoming value here.
+    /// </summary>
+    public void Normalize()
     {
-        Plugin.PluginInterface.SavePluginConfig(this);
+        this.CustomMappings ??= new Dictionary<string, string>();
+        this.SeededDefaultGlyphKeys ??= [];
+        this.PhraseReplacements ??= [];
+        this.PhraseReplacements.RemoveAll(p => p is null);
+        this.Version = CurrentVersion;
     }
-}
-
-[Serializable]
-public sealed class PhraseReplacement
-{
-    public string From { get; set; } = string.Empty;
-
-    public string To { get; set; } = string.Empty;
-
-    public bool Enabled { get; set; } = true;
 }

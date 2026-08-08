@@ -14,8 +14,6 @@ internal sealed class KanjiMapService
 
     public IReadOnlyDictionary<char, char> Active => this.active;
 
-    public int BuiltInCount { get; private set; }
-
     public int ActiveCount => this.active.Count;
 
     public void Rebuild(Configuration config, AxisFontCoverage? coverage)
@@ -32,8 +30,6 @@ internal sealed class KanjiMapService
         {
             map = new Dictionary<char, char>(KanjiMap.Entries);
         }
-
-        this.BuiltInCount = map.Count;
 
         foreach (var (from, to) in config.CustomMappings)
         {

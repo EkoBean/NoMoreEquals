@@ -1,7 +1,7 @@
 namespace NoMoreEquals.Localization;
 
 /// <summary>
-/// Traditional Chinese UI copy for Dalamud language codes <c>tw</c> and <c>zh</c>.
+/// Traditional Chinese UI copy for Dalamud language code <c>tw</c>.
 /// Edit this file to change Chinese strings.
 /// </summary>
 internal static class LocTw

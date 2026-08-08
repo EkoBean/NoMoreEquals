@@ -7,7 +7,7 @@ namespace NoMoreEquals.Data;
 
 internal static class KanjiCandidates
 {
-    /// <summary>Unfiltered candidate pairs. Prefer FontAwareKanjiMap for gameplay.</summary>
+    /// <summary>Unfiltered candidate pairs. Runtime narrows these down via <see cref="KanjiMap"/>.</summary>
     public static IReadOnlyDictionary<char, char> Entries { get; } = new Dictionary<char, char>
     {
         ['\u4E58'] = '\u4E57', // 乘 -> 乗
@@ -420,6 +420,4 @@ internal static class KanjiCandidates
         ['\u9F8D'] = '\u7ADC', // 龍 -> 竜
         ['\u9F9C'] = '\u4E80', // 龜 -> 亀
     };
-
-    public static int Count => 409;
 }

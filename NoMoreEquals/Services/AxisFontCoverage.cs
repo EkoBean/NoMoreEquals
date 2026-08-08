@@ -12,11 +12,11 @@ internal sealed class AxisFontCoverage
 {
     private const string Axis12Path = "common/font/AXIS_12.fdt";
 
-    public HashSet<char> Glyphs { get; private set; } = [];
+    private HashSet<char> glyphs = [];
 
     public bool Loaded { get; private set; }
 
-    public int GlyphCount => this.Glyphs.Count;
+    public int GlyphCount => this.glyphs.Count;
 
     public bool TryLoad(IDataManager dataManager, IPluginLog log)
     {
@@ -38,7 +38,7 @@ internal sealed class AxisFontCoverage
                     set.Add(c);
             }
 
-            this.Glyphs = set;
+            this.glyphs = set;
             this.Loaded = true;
             log.Information($"NoMoreEquals: loaded AXIS_12 coverage ({set.Count} glyphs)");
             return true;
@@ -50,5 +50,5 @@ internal sealed class AxisFontCoverage
         }
     }
 
-    public bool Contains(char c) => this.Glyphs.Contains(c);
+    public bool Contains(char c) => this.glyphs.Contains(c);
 }

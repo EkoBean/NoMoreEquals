@@ -68,7 +68,7 @@ def main() -> None:
         "",
         "internal static class KanjiCandidates",
         "{",
-        "    /// <summary>Unfiltered candidate pairs. Prefer FontAwareKanjiMap for gameplay.</summary>",
+        "    /// <summary>Unfiltered candidate pairs. Runtime narrows these down via <see cref=\"KanjiMap\"/>.</summary>",
         "    public static IReadOnlyDictionary<char, char> Entries { get; } = new Dictionary<char, char>",
         "    {",
     ]
@@ -76,8 +76,6 @@ def main() -> None:
         lines.append(f"        ['\\u{ord(zh):04X}'] = '\\u{ord(jp):04X}', // {zh} -> {jp}")
     lines += [
         "    };",
-        "",
-        f"    public static int Count => {len(items)};",
         "}",
         "",
     ]

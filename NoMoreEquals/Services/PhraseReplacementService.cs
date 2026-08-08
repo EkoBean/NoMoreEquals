@@ -19,7 +19,7 @@ internal sealed class PhraseReplacementService
 
     public void Rebuild(Configuration config)
     {
-        this.ordered = (config.PhraseReplacements ?? [])
+        this.ordered = config.PhraseReplacements
             .Where(p => p.Enabled
                         && !string.IsNullOrEmpty(p.From)
                         && p.To is not null

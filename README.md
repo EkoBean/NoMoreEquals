@@ -58,8 +58,15 @@ Only 'tw' localization currently supported.
 
 中文介面目前只有繁中('tw')設定才有，其他的都是英文。
 
+## Regenerating the glyph data
+
+`NoMoreEquals/Data/KanjiCandidates.cs` and `KanjiMap.cs` are produced offline by the
+scripts in `tools/`, not at runtime. See [tools/README.md](tools/README.md).
+
+`Data/` 底下那兩份字表是離線產生的，不會在遊戲中重算，做法見 [tools/README.md](tools/README.md)。
+
 ## License
 
-AGPL-3.0-or-later (same family as Dalamud SamplePlugin).
+[AGPL-3.0-or-later](LICENSE) (same family as Dalamud SamplePlugin).
 
 OpenCC dictionary data used for candidates is Apache-2.0 (BYVoid/OpenCC).
