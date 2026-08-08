@@ -27,7 +27,8 @@ internal static class LocEn
         NoPhrasesYet = "No phrase customizations yet.",
         GlyphSectionTitle = "Missing-glyph mappings",
         GlyphSectionHelp =
-            "Add the missing glyphs if built-in mappings don't cover them.",
+            "Built-in variant maps (e.g. 綠→緑) apply automatically. " +
+            "Below are editable overrides — starters like 啊→阿 / 嗎→嘛 are pre-filled; change or delete freely.",
         GlyphFrom = "From",
         GlyphTo = "To",
         AddGlyph = "Add character",

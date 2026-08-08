@@ -3,6 +3,7 @@ using Dalamud.IoC;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using NoMoreEquals.Data.DefaultMissingGlyphs;
 using NoMoreEquals.Localization;
 using NoMoreEquals.Services;
 using NoMoreEquals.Windows;
@@ -36,7 +37,11 @@ public sealed class Plugin : IDalamudPlugin
     {
         this.Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         this.Configuration.CustomMappings ??= new();
+        this.Configuration.SeededDefaultGlyphKeys ??= [];
         this.Configuration.PhraseReplacements ??= [];
+
+        if (DefaultMissingGlyphMaps.SeedInto(this.Configuration))
+            this.Configuration.Save();
 
         I18n.Apply(PluginInterface.UiLanguage);
         PluginInterface.LanguageChanged += this.OnLanguageChanged;

@@ -7,7 +7,7 @@ namespace NoMoreEquals;
 [Serializable]
 public class Configuration : IPluginConfiguration
 {
-    public int Version { get; set; } = 2;
+    public int Version { get; set; } = 3;
 
     /// <summary>When false, chat input is left unchanged.</summary>
     public bool Enabled { get; set; } = true;
@@ -23,8 +23,18 @@ public class Configuration : IPluginConfiguration
     /// </summary>
     public bool UseLiveFontFilter { get; set; } = true;
 
-    /// <summary>Single-character glyph overrides (e.g. rare missing hanzi → Japanese form).</summary>
+    /// <summary>
+    /// Editable single-character glyph overrides shown on the Main tab
+    /// (includes shipped defaults such as 啊→阿 after first seed).
+    /// </summary>
     public Dictionary<string, string> CustomMappings { get; set; } = new();
+
+    /// <summary>
+    /// Curated default glyph keys already offered to this install.
+    /// Prevents re-adding a default the user deleted, while still allowing
+    /// newly shipped defaults to be seeded on upgrade.
+    /// </summary>
+    public List<string> SeededDefaultGlyphKeys { get; set; } = [];
 
     /// <summary>
     /// User phrase / wording replacements (e.g. 你→尼, 懂→明白).

@@ -5,7 +5,8 @@ using NoMoreEquals.Data;
 namespace NoMoreEquals.Services;
 
 /// <summary>
-/// Builds the effective zh→jp map: AXIS-filtered built-ins + user custom entries.
+/// Builds the effective zh→jp map:
+/// AXIS-filtered OpenCC/variant built-ins + user/custom (incl. seeded defaults).
 /// </summary>
 internal sealed class KanjiMapService
 {

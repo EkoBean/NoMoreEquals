@@ -29,9 +29,8 @@ internal static class LocTw
         NoPhrasesYet = "尚未新增替代詞彙。",
         GlyphSectionTitle = "缺字漢字對照",
         GlyphSectionHelp =
-            "內建對照會把遊戲字體顯示不出來的中文漢字換成日文漢字（例如 綠→緑）。" +
-            "字體裡本來就有的字（圖、邊、國、學…）不會動。" +
-            "下方可再加單字覆寫。",
+            "內建異體字對照（例如 綠→緑）會自動生效。" +
+            "下方是可自行增刪的缺字替換（安裝時已預填 啊→阿、嗎→嘛，可改可刪）。",
         GlyphFrom = "原字",
         GlyphTo = "換成",
         AddGlyph = "新增單字",
