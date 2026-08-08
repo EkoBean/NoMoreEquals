@@ -32,8 +32,8 @@ jobs:
         run: dotnet build NoMoreEquals/NoMoreEquals.csproj -c Release --nologo
 
       - name: Upload plugin
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: NoMoreEquals
-          path: NoMoreEquals/bin/Release/NoMoreEquals/latest.zip
+          path: NoMoreEquals/bin/x64/Release/NoMoreEquals/latest.zip
           if-no-files-found: error

@@ -46,7 +46,8 @@ jobs:
       - name: Verify tag matches plugin version, stage artifact
         shell: pwsh
         run: |
-          $manifestPath = "$env:PLUGIN_NAME/bin/Release/$env:PLUGIN_NAME/$env:PLUGIN_NAME.json"
+          $outDir = "$env:PLUGIN_NAME/bin/x64/Release/$env:PLUGIN_NAME"
+          $manifestPath = "$outDir/$env:PLUGIN_NAME.json"
           if (-not (Test-Path $manifestPath)) {
             throw "DalamudPackager produced no manifest at $manifestPath"
           }
@@ -64,7 +65,7 @@ jobs:
             throw "Tag ${{ github.ref_name }} says $tagged but the built plugin is $built. Bump <Version> in the csproj."
           }
 
-          Copy-Item "$env:PLUGIN_NAME/bin/Release/$env:PLUGIN_NAME/latest.zip" "$env:PLUGIN_NAME.zip"
+          Copy-Item "$outDir/latest.zip" "$env:PLUGIN_NAME.zip"
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -82,7 +83,7 @@ jobs:
           git fetch origin $env:DEFAULT_BRANCH
           git checkout -B $env:DEFAULT_BRANCH "origin/$env:DEFAULT_BRANCH"
 
-          $manifest = Get-Content "$env:PLUGIN_NAME/bin/Release/$env:PLUGIN_NAME/$env:PLUGIN_NAME.json" -Raw | ConvertFrom-Json
+          $manifest = Get-Content "$env:PLUGIN_NAME/bin/x64/Release/$env:PLUGIN_NAME/$env:PLUGIN_NAME.json" -Raw | ConvertFrom-Json
           $download = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/${{ github.ref_name }}/$env:PLUGIN_NAME.zip"
 
           $entry = [ordered]@{}
