@@ -55,30 +55,8 @@ https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/repo.json
 3. Paste the URL above, press **+**, then **Save and Close**. 貼上網址，按 **+**，再按儲存並關閉。
 4. Open `/xlplugins`, search for **NoMoreEquals**, and install. 打開插件安裝器搜尋 NoMoreEquals 安裝。
 
-Updates arrive automatically once installed. 之後更新會自動推送。
-
-### Building from source 自行建置
-
-1. In XIVLauncher → Settings → Dalamud → enable **Dev Plugins** / custom plugin path.
-2. Run `dotnet build -c Release`, then point DevPlugins at
-   `NoMoreEquals/bin/Release/NoMoreEquals/` (contains `NoMoreEquals.dll` + `NoMoreEquals.json`).
-3. Launch the game and load the plugin.
-
 ## Localization
 
 Only 'tw' localization currently supported.
 
 中文介面目前只有繁中('tw')設定才有，其他的都是英文。
-
-## Regenerating the glyph data
-
-`NoMoreEquals/Data/KanjiCandidates.cs` and `KanjiMap.cs` are produced offline by the
-scripts in `tools/`, not at runtime. See [tools/README.md](tools/README.md).
-
-`Data/` 底下那兩份字表是離線產生的，不會在遊戲中重算，做法見 [tools/README.md](tools/README.md)。
-
-## License
-
-[AGPL-3.0-or-later](LICENSE) (same family as Dalamud SamplePlugin).
-
-OpenCC dictionary data used for candidates is Apache-2.0 (BYVoid/OpenCC).
