@@ -92,6 +92,10 @@ jobs:
 
           $entry['RepoUrl'] = "https://github.com/$env:GITHUB_REPOSITORY"
           $entry['IconUrl'] = "https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/$env:DEFAULT_BRANCH/docs/images/icon.png"
+          $entry['ImageUrls'] = @(
+            "https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/$env:DEFAULT_BRANCH/docs/images/exampleimg01.png",
+            "https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/$env:DEFAULT_BRANCH/docs/images/exampleimg02.png"
+          )
           $entry['DownloadLinkInstall'] = $download
           $entry['DownloadLinkUpdate'] = $download
           $entry['DownloadLinkTesting'] = $download

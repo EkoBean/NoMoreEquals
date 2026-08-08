@@ -22,6 +22,10 @@
     "AcceptsFeedback": true,
     "RepoUrl": "https://github.com/EkoBean/NoMoreEquals",
     "IconUrl": "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/icon.png",
+    "ImageUrls": [
+      "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg01.png",
+      "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg02.png"
+    ],
     "DownloadLinkInstall": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.2.0/NoMoreEquals.zip",
     "DownloadLinkUpdate": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.2.0/NoMoreEquals.zip",
     "DownloadLinkTesting": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.2.0/NoMoreEquals.zip",
