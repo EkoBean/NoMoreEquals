@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  PLUGIN_NAME: NoMoreEquals
+  PROJECT_PATH: NoMoreEquals/NoMoreEquals.csproj
+  DEFAULT_BRANCH: master
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      # Dalamud.NET.Sdk resolves the game assemblies from the local XIVLauncher
+      # install, so the runner needs a copy at that exact path.
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          $dir = "$env:AppData\XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Invoke-WebRequest -Uri 'https://goatcorp.github.io/dalamud-distrib/latest.zip' -OutFile dalamud.zip
+          Expand-Archive -Path dalamud.zip -DestinationPath $dir -Force
+          Remove-Item dalamud.zip
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build $env:PROJECT_PATH -c Release --nologo
+
+      - name: Verify tag matches plugin version, stage artifact
+        shell: pwsh
+        run: |
+          $manifestPath = "$env:PLUGIN_NAME/bin/Release/$env:PLUGIN_NAME/$env:PLUGIN_NAME.json"
+          if (-not (Test-Path $manifestPath)) {
+            throw "DalamudPackager produced no manifest at $manifestPath"
+          }
+
+          function Normalize([string]$v) {
+            $parts = @($v.Split('.'))
+            while ($parts.Count -lt 4) { $parts += '0' }
+            return ($parts[0..3] -join '.')
+          }
+
+          $built = Normalize (Get-Content $manifestPath -Raw | ConvertFrom-Json).AssemblyVersion
+          $tagged = Normalize ('${{ github.ref_name }}'.TrimStart('v'))
+
+          if ($built -ne $tagged) {
+            throw "Tag ${{ github.ref_name }} says $tagged but the built plugin is $built. Bump <Version> in the csproj."
+          }
+
+          Copy-Item "$env:PLUGIN_NAME/bin/Release/$env:PLUGIN_NAME/latest.zip" "$env:PLUGIN_NAME.zip"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.PLUGIN_NAME }}.zip
+          generate_release_notes: true
+
+      # repo.json is the manifest Dalamud polls. Regenerating it from the built
+      # manifest keeps it from drifting out of sync with the plugin itself.
+      - name: Update repo.json
+        shell: pwsh
+        run: |
+          # The tag checkout is detached, and the tag is not necessarily at the
+          # branch tip, so always rebase this change onto the current remote tip.
+          git fetch origin $env:DEFAULT_BRANCH
+          git checkout -B $env:DEFAULT_BRANCH "origin/$env:DEFAULT_BRANCH"
+
+          $manifest = Get-Content "$env:PLUGIN_NAME/bin/Release/$env:PLUGIN_NAME/$env:PLUGIN_NAME.json" -Raw | ConvertFrom-Json
+          $download = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/${{ github.ref_name }}/$env:PLUGIN_NAME.zip"
+
+          $entry = [ordered]@{}
+          foreach ($property in $manifest.PSObject.Properties) {
+            $entry[$property.Name] = $property.Value
+          }
+
+          $entry['RepoUrl'] = "https://github.com/$env:GITHUB_REPOSITORY"
+          $entry['IconUrl'] = "https://raw.githubusercontent.com/$env:GITHUB_REPOSITORY/$env:DEFAULT_BRANCH/docs/images/icon.png"
+          $entry['DownloadLinkInstall'] = $download
+          $entry['DownloadLinkUpdate'] = $download
+          $entry['DownloadLinkTesting'] = $download
+          $entry['DownloadCount'] = 0
+          $entry['LastUpdate'] = [int][DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+
+          $json = ConvertTo-Json @($entry) -Depth 10
+          [IO.File]::WriteAllText("$PWD/repo.json", $json + "`n", (New-Object Text.UTF8Encoding $false))
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add repo.json
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "chore: repo.json for ${{ github.ref_name }}"
+            git push origin $env:DEFAULT_BRANCH
+          }
+          else {
+            Write-Host 'repo.json already up to date.'
+          }

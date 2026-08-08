@@ -1,0 +1,39 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          $dir = "$env:AppData\XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Invoke-WebRequest -Uri 'https://goatcorp.github.io/dalamud-distrib/latest.zip' -OutFile dalamud.zip
+          Expand-Archive -Path dalamud.zip -DestinationPath $dir -Force
+          Remove-Item dalamud.zip
+
+      - name: Build
+        run: dotnet build NoMoreEquals/NoMoreEquals.csproj -c Release --nologo
+
+      - name: Upload plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: NoMoreEquals
+          path: NoMoreEquals/bin/Release/NoMoreEquals/latest.zip
+          if-no-files-found: error

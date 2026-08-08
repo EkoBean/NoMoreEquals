@@ -2,7 +2,7 @@
   "Author": "Beanie",
   "Name": "NoMoreEquals 不要等號",
   "Punchline": "No more Chinese characters loss in game. 不要再給我等號了==",
-  "Description": "Readable Chinese in chat please. Convert missing Chinese glyphs into Japanese kanji to let them shows.\n講話都是等號是要我通靈？ 缺字自動轉日文漢字\nNote: Only support in Traditional Chinese.\n註：只支援繁體中文\n\nCommands: /nme or /nomoreequals",
+  "Description": "Readable Chinese in chat please. Convert missing Chinese glyphs into Japanese kanji to let them shows.\n講話都是等號是要我通靈？ 缺字自動轉日文漢字工具\nNote: Only support in Traditional Chinese.\n註：只支援繁體中文\n\nCommands: /nme or /nomoreequals",
   "ApplicableVersion": "any",
   "Tags": [
     "chat",

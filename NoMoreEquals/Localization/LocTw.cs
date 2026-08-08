@@ -14,31 +14,30 @@ internal static class LocTw
         StatusCounts = "缺字對照：{0}　｜　替代詞彙：{1}",
         TabMain = "首頁",
         TabAdvanced = "進階",
-        Preview = "轉換預覽",
-        PreviewInputHint = "這裡不會反映遊戲內缺字。",
+        Preview = "字符轉換預覽",
+        PreviewInputHint = "這裡不會反映遊戲內缺字，僅供效果預覽。",
         PreviewResult = "轉換結果",
         PreviewHelp =
             "請輸入文字",
-        PhraseSectionTitle = "替代詞彙（自訂）",
+        PhraseSectionTitle = "自訂替換詞",
         PhraseSectionHelp =
-            "用在日文／字體都無法直接表達的說法，例如「你」→「尼」、「懂」→「明白」。" +
-            "會先做詞彙替換，再做缺字漢字轉換。較長的詞優先匹配。",
+            "有些國字沒有對應的日文漢字(例如：你、潢、懂)，可以自定義使用者替換詞。\n",
         PhraseFrom = "原文",
         PhraseTo = "替換為",
         AddPhrase = "新增詞彙",
         NoPhrasesYet = "尚未新增替代詞彙。",
-        GlyphSectionTitle = "缺字漢字對照",
+        GlyphSectionTitle = "自訂缺字轉換",
         GlyphSectionHelp =
-            "內建異體字對照（例如 綠→緑）會自動生效。" +
-            "下方是可自行增刪的缺字替換（安裝時已預填 啊→阿、嗎→嘛，可改可刪）。",
+            "內建異體字轉換會自動生效。" +
+            "下方是可自行增刪缺字替換。",
         GlyphFrom = "原字",
         GlyphTo = "換成",
-        AddGlyph = "新增單字",
-        NoGlyphOverridesYet = "尚未新增單字覆寫（內建缺字對照仍會生效）。",
+        AddGlyph = "新增文字",
+        NoGlyphOverridesYet = "尚未新增文字替換。",
         Delete = "刪除",
         AdvancedHelp =
             "AXIS 是 FFXIV 聊天／介面用的系統字體。外掛啟動時會自動讀取字體裡有哪些字，" +
-            "只替換真正缺字的漢字。一般使用者不必手動重建。",
+            "若更換字體包更新才需重建對照。",
         UseLiveFontFilter = "依目前遊戲字體過濾缺字對照",
         RebuildFromFont = "重新讀取遊戲字體並重建對照",
         AdvancedOverviewHelp =

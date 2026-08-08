@@ -20,15 +20,15 @@ internal static class LocEn
             "Type something here.",
         PhraseSectionTitle = "Custom phrases",
         PhraseSectionHelp =
-            "For those characters that don't have Japanese Kanji. \nCustomize your glyph replacements here.",
+            "For those characters that don't have Japanese Kanji. Customize your glyph replacements here." ,
         PhraseFrom = "From",
         PhraseTo = "To",
         AddPhrase = "Add phrase",
         NoPhrasesYet = "No phrase customizations yet.",
         GlyphSectionTitle = "Missing-glyph mappings",
         GlyphSectionHelp =
-            "Built-in variant maps (e.g. 綠→緑) apply automatically. " +
-            "Below are editable overrides — starters like 啊→阿 / 嗎→嘛 are pre-filled; change or delete freely.",
+            "Built-in variant maps apply automatically. " +
+            "\nEdit any of glyph if no supported built-in glyphs.",
         GlyphFrom = "From",
         GlyphTo = "To",
         AddGlyph = "Add character",
@@ -36,7 +36,7 @@ internal static class LocEn
         Delete = "Delete",
         AdvancedHelp =
             "AXIS is FFXIV's main UI/chat font. On startup the plugin reads which glyphs exist and only " +
-            "converts Chinese forms that are actually missing. Most users never need this tab.",
+            "Rebuild if you change your font package.",
         UseLiveFontFilter = "Filter glyph map using the current game font",
         RebuildFromFont = "Reload game font and rebuild glyph map",
         AdvancedOverviewHelp =
