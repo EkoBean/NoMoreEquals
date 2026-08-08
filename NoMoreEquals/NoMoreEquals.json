@@ -1,0 +1,15 @@
+{
+  "Author": "Beanie",
+  "Name": "NoMoreEquals 不要等號",
+  "Punchline": "Replace missing Traditional Chinese glyphs with Japanese kanji while typing chat.",
+  "Description": "While typing in ChatLog, replaces AXIS-missing Chinese glyphs with Japanese kanji (綠→緑, 黑→黒, 每→毎), and supports custom phrase replacements (你→尼, 懂→明白). Built-in glyph pairs are filtered against live AXIS coverage so characters that already display (圖, 邊, 國, 學, …) stay untouched.\n\nCommands: /nme or /nomoreequals",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "chat",
+    "chinese",
+    "japanese",
+    "kanji",
+    "font",
+    "glyph"
+  ]
+}

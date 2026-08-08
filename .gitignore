@@ -1,0 +1,6 @@
+.vs/
+obj/
+bin/
+*.user
+_tmp_sample/
+_tmp_opencc/
