@@ -10,5 +10,10 @@
     "kanji",
     "font",
     "glyph"
+  ],
+  "IconUrl": "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/icon.png",
+  "ImageUrls": [
+    "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg01.png",
+    "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg02.png"
   ]
 }
