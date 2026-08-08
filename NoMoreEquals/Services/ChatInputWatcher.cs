@@ -82,23 +82,20 @@ internal sealed class ChatInputWatcher : IDisposable
         if (this.mapService.Active.Count == 0 && this.phraseService.EnabledCount == 0)
             return null;
 
-        if (this.configuration.SkipSlashCommands)
+        // Slash commands are decided from the buffer; if the line already starts with '/',
+        // leave Imm alone so we never rewrite command arguments mid-IME.
+        try
         {
-            // Slash commands are decided from the buffer; if the line already starts with '/',
-            // leave Imm alone so we never rewrite command arguments mid-IME.
-            try
+            if (this.TryGetActiveInput(out var input))
             {
-                if (this.TryGetActiveInput(out var input))
-                {
-                    var text = GetTextInputString(input);
-                    if (!string.IsNullOrEmpty(text) && text.StartsWith('/'))
-                        return null;
-                }
+                var text = GetTextInputString(input);
+                if (!string.IsNullOrEmpty(text) && text.StartsWith('/'))
+                    return null;
             }
-            catch
-            {
-                // fall through and convert
-            }
+        }
+        catch
+        {
+            // fall through and convert
         }
 
         var converted = KanjiConverter.ConvertAll(result, this.phraseService, this.mapService.Active);
@@ -334,7 +331,7 @@ internal sealed class ChatInputWatcher : IDisposable
             if (string.IsNullOrEmpty(text))
                 return;
 
-            if (this.configuration.SkipSlashCommands && text.StartsWith('/'))
+            if (text.StartsWith('/'))
                 return;
 
             if (ImeCompositionTracker.IsMostlyEqualsNoise(text))

@@ -9,7 +9,7 @@ internal sealed class UiStrings
 
     public required string EnableChatConversion { get; init; }
 
-    public required string SkipSlashCommands { get; init; }
+    public required string ShowChatPreviewOverlay { get; init; }
 
     public required string StatusCounts { get; init; }
 

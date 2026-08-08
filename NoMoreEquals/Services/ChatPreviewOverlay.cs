@@ -53,7 +53,7 @@ internal sealed class ChatPreviewOverlay : IDisposable
 
     public unsafe void Draw()
     {
-        if (!this.configuration.Enabled)
+        if (!this.configuration.Enabled || !this.configuration.ShowChatPreviewOverlay)
             return;
 
         if (this.mapService.Active.Count == 0 && this.phraseService.EnabledCount == 0)
@@ -84,7 +84,8 @@ internal sealed class ChatPreviewOverlay : IDisposable
                 return;
 
             var raw = GetTextInputString(input);
-            if (this.configuration.SkipSlashCommands && !string.IsNullOrEmpty(raw) && raw.StartsWith('/'))
+            // Slash commands are never converted; hide preview for those lines.
+            if (!string.IsNullOrEmpty(raw) && raw.StartsWith('/'))
             {
                 this.ClearPreviewLifecycle();
                 return;

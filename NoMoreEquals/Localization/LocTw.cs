@@ -10,7 +10,7 @@ internal static class LocTw
     {
         WindowTitle = "NoMoreEquals 不要等號",
         EnableChatConversion = "開啟 \"NoMoreEquals 不要等號\"",
-        SkipSlashCommands = "略過以 / 開頭的指令列",
+        ShowChatPreviewOverlay = "顯示聊天框轉換預覽",
         StatusCounts = "缺字對照：{0}　｜　替代詞彙：{1}",
         TabMain = "首頁",
         TabAdvanced = "進階",

@@ -51,10 +51,10 @@ internal sealed class ConfigWindow : Window
             this.context.Save();
         }
 
-        var skipSlash = config.SkipSlashCommands;
-        if (ImGui.Checkbox(t.SkipSlashCommands, ref skipSlash))
+        var showPreview = config.ShowChatPreviewOverlay;
+        if (ImGui.Checkbox(t.ShowChatPreviewOverlay, ref showPreview))
         {
-            config.SkipSlashCommands = skipSlash;
+            config.ShowChatPreviewOverlay = showPreview;
             this.context.Save();
         }
 

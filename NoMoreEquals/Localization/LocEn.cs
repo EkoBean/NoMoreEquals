@@ -9,7 +9,7 @@ internal static class LocEn
     {
         WindowTitle = "NoMoreEquals 不要等號",
         EnableChatConversion = "Enable NoMoreEquals",
-        SkipSlashCommands = "Skip lines starting with /",
+        ShowChatPreviewOverlay = "Show chat box conversion preview",
         StatusCounts = "Glyph mappings: {0}  |  Phrase replacements: {1}",
         TabMain = "Main",
         TabAdvanced = "Advanced",

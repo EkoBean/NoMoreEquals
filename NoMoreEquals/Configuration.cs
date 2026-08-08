@@ -20,9 +20,9 @@ public class Configuration : IPluginConfiguration
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// When true, skip conversion for chat lines that start with '/'.
+    /// When true, draw the live conversion preview above the chat input box.
     /// </summary>
-    public bool SkipSlashCommands { get; set; } = true;
+    public bool ShowChatPreviewOverlay { get; set; } = true;
 
     /// <summary>
     /// When true, rebuild the active glyph map from candidates + live AXIS glyphs on load.
