@@ -3,7 +3,7 @@
     "Author": "Beanie",
     "Name": "NoMoreEquals 不要等號",
     "InternalName": "NoMoreEquals",
-    "AssemblyVersion": "0.1.14.0",
+    "AssemblyVersion": "0.1.15.0",
     "Description": "Readable Chinese in chat please. Convert missing Chinese glyphs into Japanese kanji to let them shows.\n講話都是等號是要我通靈？ 缺字自動轉日文漢字工具\nNote: Only support in Traditional Chinese.\n註：只支援繁體中文\n\nCommands: /nme or /nomoreequals",
     "ApplicableVersion": "any",
     "Tags": [
@@ -26,10 +26,10 @@
       "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg01.png",
       "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg02.png"
     ],
-    "DownloadLinkInstall": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.2.0/NoMoreEquals.zip",
-    "DownloadLinkUpdate": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.2.0/NoMoreEquals.zip",
-    "DownloadLinkTesting": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.2.0/NoMoreEquals.zip",
+    "DownloadLinkInstall": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.1.15/NoMoreEquals.zip",
+    "DownloadLinkUpdate": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.1.15/NoMoreEquals.zip",
+    "DownloadLinkTesting": "https://github.com/EkoBean/NoMoreEquals/releases/download/v0.1.15/NoMoreEquals.zip",
     "DownloadCount": 0,
-    "LastUpdate": 1786199447
+    "LastUpdate": 1786205591
   }
 ]
