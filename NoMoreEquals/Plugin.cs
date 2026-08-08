@@ -23,7 +23,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
 
     private readonly AxisFontCoverage fontCoverage = new();
+    private readonly ImeCompositionTracker imeTracker = new();
     private readonly ChatInputWatcher chatWatcher;
+    private readonly ChatPreviewOverlay chatPreview;
     private readonly WindowSystem windowSystem = new("NoMoreEquals");
     private readonly ConfigWindow configWindow;
 
@@ -46,7 +48,16 @@ public sealed class Plugin : IDalamudPlugin
             this.PhraseService,
             Framework,
             GameGui,
-            Log);
+            Log,
+            this.imeTracker);
+
+        this.chatPreview = new ChatPreviewOverlay(
+            this.Configuration,
+            this.MapService,
+            this.PhraseService,
+            GameGui,
+            this.imeTracker,
+            PluginInterface);
 
         this.configWindow = new ConfigWindow(this);
         this.windowSystem.AddWindow(this.configWindow);
@@ -54,7 +65,7 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.AddHandler(CommandName, new CommandInfo(this.OnCommand) { HelpMessage = CommandHelp });
         CommandManager.AddHandler(CommandNameLong, new CommandInfo(this.OnCommand) { HelpMessage = CommandHelp });
 
-        PluginInterface.UiBuilder.Draw += this.windowSystem.Draw;
+        PluginInterface.UiBuilder.Draw += this.OnDraw;
         PluginInterface.UiBuilder.OpenConfigUi += this.ToggleConfigUi;
 
         Log.Information(
@@ -72,14 +83,22 @@ public sealed class Plugin : IDalamudPlugin
     public void Dispose()
     {
         PluginInterface.LanguageChanged -= this.OnLanguageChanged;
-        PluginInterface.UiBuilder.Draw -= this.windowSystem.Draw;
+        PluginInterface.UiBuilder.Draw -= this.OnDraw;
         PluginInterface.UiBuilder.OpenConfigUi -= this.ToggleConfigUi;
 
         this.chatWatcher.Dispose();
+        this.chatPreview.Dispose();
+        this.imeTracker.Dispose();
         this.windowSystem.RemoveAllWindows();
 
         CommandManager.RemoveHandler(CommandName);
         CommandManager.RemoveHandler(CommandNameLong);
+    }
+
+    private void OnDraw()
+    {
+        this.windowSystem.Draw();
+        this.chatPreview.Draw();
     }
 
     /// <summary>Recomputes both conversion tables from the current configuration.</summary>
