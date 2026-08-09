@@ -16,5 +16,5 @@
     "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg01.png",
     "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg02.png"
   ],
-  "Changelog": ""
+  "Changelog": "Change the IME inputting experience, no more hidding text when typing the replacing text.\\n改善IME輸入體驗，替換文字時不會再隱藏文字。"
 }
