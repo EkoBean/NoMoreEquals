@@ -218,7 +218,7 @@ if (!this.gate.ShouldConvert(raw)) return;       // 不繪製，但不重設影�
 
 ## 範圍之外
 
-**自訂字典的輸入驗證**（禁止純 ASCII 的來源側規則）在討論中提出並刻意延後。它是設定視窗的輸入驗證，與 IME pipeline 零交集，應另立一份 spec。
+**自訂字典的輸入驗證**（來源側必須含中文字）在討論中提出並刻意延後。它是設定視窗的輸入驗證，與 IME pipeline 零交集，另立於 [2026-08-10-dictionary-source-validation-design.md](2026-08-10-dictionary-source-validation-design.md)。
 
 ## 來源
 
