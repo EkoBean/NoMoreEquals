@@ -19,6 +19,17 @@ internal static class UiHelpers
         ImGui.SetWindowFontScale(1f);
     }
 
+    /// <summary>
+    /// One line of feedback. Always TextUnformatted: the message embeds player input,
+    /// which may contain '%', so it must never reach a format string.
+    /// </summary>
+    public static void StatusText(string message)
+    {
+        ImGui.PushTextWrapPos(0f);
+        ImGui.TextUnformatted(message);
+        ImGui.PopTextWrapPos();
+    }
+
     /// <summary>Width for two input fields sitting side by side on one row.</summary>
     public static float HalfFieldWidth()
     {

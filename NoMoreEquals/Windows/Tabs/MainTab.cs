@@ -95,6 +95,10 @@ internal sealed class MainTab
         ImGui.SameLine();
         ImGui.SetNextItemWidth(half);
         ImGui.InputTextWithHint("##phraseTo", t.PhraseTo, ref this.newPhraseTo, 64);
+
+        if (this.context.HasStatusFor(StatusSlot.Phrase))
+            UiHelpers.StatusText(this.context.StatusMessage);
+
         if (ImGui.Button($"{t.AddPhrase}##addPhrase", new Vector2(-1, 0)))
             this.TryAddPhrase(t);
 
@@ -124,7 +128,7 @@ internal sealed class MainTab
         {
             phrases.RemoveAt(removeAt);
             this.context.ApplyAndSave();
-            this.context.StatusMessage = t.PhraseRemoved;
+            this.context.SetStatus(StatusSlot.Phrase, t.PhraseRemoved);
         }
 
         if (phrases.Count == 0)
@@ -144,6 +148,10 @@ internal sealed class MainTab
         ImGui.SameLine();
         ImGui.SetNextItemWidth(half);
         ImGui.InputTextWithHint("##glyphTo", t.GlyphTo, ref this.newGlyphTo, 8);
+
+        if (this.context.HasStatusFor(StatusSlot.Glyph))
+            UiHelpers.StatusText(this.context.StatusMessage);
+
         if (ImGui.Button($"{t.AddGlyph}##addGlyph", new Vector2(-1, 0)))
             this.TryAddGlyph(t);
 
@@ -181,20 +189,20 @@ internal sealed class MainTab
 
         if (string.IsNullOrEmpty(from))
         {
-            this.context.StatusMessage = t.PhraseEmptyError;
+            this.context.SetStatus(StatusSlot.Phrase, t.PhraseEmptyError);
             return;
         }
 
         // Ahead of the same-as check so that "abc" -> "abc" reports the real problem.
         if (!ChineseScript.HasChineseCharacter(from))
         {
-            this.context.StatusMessage = t.SourceNeedChineseError;
+            this.context.SetStatus(StatusSlot.Phrase, t.SourceNeedChineseError);
             return;
         }
 
         if (string.Equals(from, to, StringComparison.Ordinal))
         {
-            this.context.StatusMessage = t.PhraseSameError;
+            this.context.SetStatus(StatusSlot.Phrase, t.PhraseSameError);
             return;
         }
 
@@ -208,7 +216,7 @@ internal sealed class MainTab
         this.context.ApplyAndSave();
         this.newPhraseFrom = string.Empty;
         this.newPhraseTo = string.Empty;
-        this.context.StatusMessage = string.Format(t.PhraseAdded, from, to);
+        this.context.SetStatus(StatusSlot.Phrase, string.Format(t.PhraseAdded, from, to));
     }
 
     private void TryAddGlyph(UiStrings t)
@@ -217,13 +225,13 @@ internal sealed class MainTab
             || !KanjiMapService.TryParseSingleChar(this.newGlyphTo, out var jp)
             || zh == jp)
         {
-            this.context.StatusMessage = t.GlyphNeedSingleChar;
+            this.context.SetStatus(StatusSlot.Glyph, t.GlyphNeedSingleChar);
             return;
         }
 
         if (!ChineseScript.HasChineseCharacter(zh.ToString()))
         {
-            this.context.StatusMessage = t.SourceNeedChineseError;
+            this.context.SetStatus(StatusSlot.Glyph, t.SourceNeedChineseError);
             return;
         }
 
@@ -231,6 +239,6 @@ internal sealed class MainTab
         this.context.ApplyAndSave();
         this.newGlyphFrom = string.Empty;
         this.newGlyphTo = string.Empty;
-        this.context.StatusMessage = string.Format(t.GlyphAdded, zh, jp);
+        this.context.SetStatus(StatusSlot.Glyph, string.Format(t.GlyphAdded, zh, jp));
     }
 }

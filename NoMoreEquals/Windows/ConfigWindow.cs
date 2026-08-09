@@ -81,14 +81,12 @@ internal sealed class ConfigWindow : Window
             ImGui.EndTabBar();
         }
 
-        if (!string.IsNullOrEmpty(this.context.StatusMessage))
+        // Only what has no home of its own. Feedback raised by the phrase and glyph forms
+        // is drawn beside the button that raised it, not down here.
+        if (this.context.HasStatusFor(StatusSlot.Window))
         {
             ImGui.Spacing();
-
-            // Status text embeds player input, so it must not be treated as a format string.
-            ImGui.PushTextWrapPos(0f);
-            ImGui.TextUnformatted(this.context.StatusMessage);
-            ImGui.PopTextWrapPos();
+            UiHelpers.StatusText(this.context.StatusMessage);
         }
     }
 }

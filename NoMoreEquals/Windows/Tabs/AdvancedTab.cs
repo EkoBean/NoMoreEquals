@@ -40,10 +40,12 @@ internal sealed class AdvancedTab
         if (ImGui.Button(t.RebuildFromFont))
         {
             this.context.Plugin.RebuildAll();
-            this.context.StatusMessage = string.Format(
-                t.RebuiltStatus,
-                this.context.Plugin.MapService.ActiveCount,
-                this.context.Plugin.PhraseService.EnabledCount);
+            this.context.SetStatus(
+                StatusSlot.Window,
+                string.Format(
+                    t.RebuiltStatus,
+                    this.context.Plugin.MapService.ActiveCount,
+                    this.context.Plugin.PhraseService.EnabledCount));
         }
 
         ImGui.Spacing();
