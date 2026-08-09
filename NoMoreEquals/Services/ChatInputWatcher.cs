@@ -67,6 +67,7 @@ internal sealed class ChatInputWatcher : IDisposable
     private static readonly TimeSpan ChatGoneGrace = TimeSpan.FromMilliseconds(250);
 
     private readonly Configuration configuration;
+    private readonly ConversionGate gate;
     private readonly KanjiMapService mapService;
     private readonly PhraseReplacementService phraseService;
     private readonly ChatInputAccessor accessor;
@@ -81,6 +82,7 @@ internal sealed class ChatInputWatcher : IDisposable
 
     public ChatInputWatcher(
         Configuration configuration,
+        ConversionGate gate,
         KanjiMapService mapService,
         PhraseReplacementService phraseService,
         ChatInputAccessor accessor,
@@ -89,6 +91,7 @@ internal sealed class ChatInputWatcher : IDisposable
         ImeCompositionTracker imeTracker)
     {
         this.configuration = configuration;
+        this.gate = gate;
         this.mapService = mapService;
         this.phraseService = phraseService;
         this.accessor = accessor;
@@ -100,9 +103,6 @@ internal sealed class ChatInputWatcher : IDisposable
         this.imeTracker.BeforeReturnKeyDown = this.ConvertBeforeSend;
         this.framework.Update += this.OnFrameworkUpdate;
     }
-
-    private bool NoRulesActive
-        => this.mapService.Active.Count == 0 && this.phraseService.EnabledCount == 0;
 
     public void Dispose()
     {
@@ -120,13 +120,15 @@ internal sealed class ChatInputWatcher : IDisposable
 
     private string? TryRewriteResult(string result)
     {
-        if (!this.configuration.Enabled || !this.imeTracker.AcceptChatIme || this.NoRulesActive)
+        if (!this.imeTracker.AcceptChatIme)
             return null;
 
-        // Leave Imm alone while the player is still typing the command token itself
-        // ("/p", "/tell"). Once the line has a space, the rest is ordinary message
-        // text and is converted like any other line.
-        if (KanjiConverter.IsInsideCommandToken(this.accessor.GetActiveText()))
+        // The gate is asked about the whole line, but the conversion runs on the chunk
+        // the IME just committed: the line decides whether we may act at all, the chunk
+        // is the text there is to act on. Returning null leaves GCS_RESULTSTR in place,
+        // so the game receives exactly what the player typed and this plugin never
+        // touched the line.
+        if (!this.gate.ShouldConvert(this.accessor.GetActiveText()))
             return null;
 
         var converted = KanjiConverter.ConvertAll(result, this.phraseService, this.mapService.Active);
@@ -207,7 +209,11 @@ internal sealed class ChatInputWatcher : IDisposable
         // Conversion may have been switched off, or the last rule deleted, while this
         // commit was in flight. Deliver what the game would have received rather than
         // honour the toggle by throwing the player's characters away.
-        if (!this.configuration.Enabled || this.NoRulesActive)
+        //
+        // IsArmed, never ShouldConvert: the line may since have become "/gearset ...",
+        // but this text was taken out of the game before that happened and is the only
+        // copy of it. The gate decides whether to convert, never whether to deliver.
+        if (!this.gate.IsArmed)
             converted = original;
 
         if (string.IsNullOrEmpty(converted))
@@ -434,7 +440,10 @@ internal sealed class ChatInputWatcher : IDisposable
     /// </summary>
     private unsafe void ConvertBeforeSend()
     {
-        if (!this.configuration.Enabled || this.writing || this.NoRulesActive)
+        // Stays ahead of Refresh: that call recomputes composition state, so moving this
+        // check below it would change when that state is recomputed. ShouldConvert cannot
+        // be asked yet — there is no line to ask about until the buffer has been read.
+        if (!this.gate.IsArmed || this.writing)
             return;
 
         this.imeTracker.Refresh(null);
@@ -455,6 +464,9 @@ internal sealed class ChatInputWatcher : IDisposable
 
             var text = ChatInputAccessor.GetText(input);
             if (string.IsNullOrEmpty(text))
+                return;
+
+            if (!this.gate.ShouldConvert(text))
                 return;
 
             // No '=' noise check here: composition has ended, so RawString is the real

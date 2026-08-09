@@ -32,32 +32,6 @@ public class KanjiConverterTests
         Assert.Same(input, Convert(input));
     }
 
-    [Theory]
-    [InlineData("", 0)]
-    [InlineData("hello", 0)]
-    [InlineData("half/way", 0)]
-    [InlineData("/", 1)]
-    [InlineData("/p", 2)]
-    [InlineData("/p ", 3)]
-    [InlineData("/p hello", 3)]
-    [InlineData("/tell Name@World hi", 6)]
-    public void GetChatBodyStart_FindsMessageBody(string input, int expected)
-    {
-        Assert.Equal(expected, KanjiConverter.GetChatBodyStart(input));
-    }
-
-    [Theory]
-    [InlineData("", false)]
-    [InlineData("hello", false)]
-    [InlineData("/p", true)]
-    [InlineData("/tell", true)]
-    [InlineData("/p ", false)]
-    [InlineData("/p hello", false)]
-    public void IsInsideCommandToken_OnlyBeforeTheFirstSpace(string input, bool expected)
-    {
-        Assert.Equal(expected, KanjiConverter.IsInsideCommandToken(input));
-    }
-
     /// <summary>
     /// The regression this exists for: both conversion layers used to bail out on any
     /// leading '/', which silently disabled the plugin for every channel command.
@@ -76,6 +50,17 @@ public class KanjiConverterTests
         Assert.Equal("/" + Green, ConvertLine("/" + Green));
         Assert.Equal("/p", ConvertLine("/p"));
         Assert.Equal("/p ", ConvertLine("/p "));
+    }
+
+    /// <summary>
+    /// A command whose argument is an identifier rather than a message: substituting a
+    /// glyph in it does not garble a sentence, it breaks the command.
+    /// </summary>
+    [Fact]
+    public void ConvertChatLine_LeavesNonChatCommandAlone()
+    {
+        Assert.Equal("/gearset change " + Green, ConvertLine("/gearset change " + Green));
+        Assert.Equal("/target " + Green, ConvertLine("/target " + Green));
     }
 
     [Fact]

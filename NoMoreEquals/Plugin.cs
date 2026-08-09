@@ -23,6 +23,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
 
     private readonly AxisFontCoverage fontCoverage = new();
+    private readonly ConversionGate conversionGate;
     private readonly ChatInputAccessor chatAccessor;
     private readonly ChatImeGate imeGate;
     private readonly ImeCompositionTracker imeTracker;
@@ -44,12 +45,14 @@ public sealed class Plugin : IDalamudPlugin
         this.fontCoverage.TryLoad(DataManager, Log);
         this.RebuildAll();
 
+        this.conversionGate = new ConversionGate(this.Configuration, this.MapService, this.PhraseService);
         this.chatAccessor = new ChatInputAccessor(GameGui);
         this.imeGate = new ChatImeGate(this.chatAccessor);
         this.imeTracker = new ImeCompositionTracker(this.imeGate);
 
         this.chatWatcher = new ChatInputWatcher(
             this.Configuration,
+            this.conversionGate,
             this.MapService,
             this.PhraseService,
             this.chatAccessor,
@@ -59,6 +62,7 @@ public sealed class Plugin : IDalamudPlugin
 
         this.chatPreview = new ChatPreviewOverlay(
             this.Configuration,
+            this.conversionGate,
             this.MapService,
             this.PhraseService,
             this.chatAccessor,

@@ -23,6 +23,7 @@ internal sealed class ChatPreviewOverlay : IDisposable
     private const float VerticalGap = 4f;
 
     private readonly Configuration configuration;
+    private readonly ConversionGate gate;
     private readonly KanjiMapService mapService;
     private readonly PhraseReplacementService phraseService;
     private readonly ChatInputAccessor accessor;
@@ -37,6 +38,7 @@ internal sealed class ChatPreviewOverlay : IDisposable
 
     public ChatPreviewOverlay(
         Configuration configuration,
+        ConversionGate gate,
         KanjiMapService mapService,
         PhraseReplacementService phraseService,
         ChatInputAccessor accessor,
@@ -44,6 +46,7 @@ internal sealed class ChatPreviewOverlay : IDisposable
         IDalamudPluginInterface pluginInterface)
     {
         this.configuration = configuration;
+        this.gate = gate;
         this.mapService = mapService;
         this.phraseService = phraseService;
         this.accessor = accessor;
@@ -55,10 +58,7 @@ internal sealed class ChatPreviewOverlay : IDisposable
 
     public unsafe void Draw()
     {
-        if (!this.configuration.Enabled || !this.configuration.ShowChatPreviewOverlay)
-            return;
-
-        if (this.mapService.Active.Count == 0 && this.phraseService.EnabledCount == 0)
+        if (!this.gate.IsArmed || !this.configuration.ShowChatPreviewOverlay)
             return;
 
         try
@@ -74,6 +74,15 @@ internal sealed class ChatPreviewOverlay : IDisposable
 
             var raw = ChatInputAccessor.GetText(input);
             this.UpdateShadow(raw);
+
+            // The shadow, not raw: the shadow is the string that would actually be drawn,
+            // and raw is the one that fills with '=' noise during composition.
+            //
+            // Deliberately no ResetShadow() here. The shadow has to keep tracking the
+            // buffer while the preview is withheld, so that deleting the "/gearset "
+            // brings the preview back on the same frame instead of flickering.
+            if (!this.gate.ShouldConvert(this.committedShadow))
+                return;
 
             var preview = this.BuildPreview();
             if (string.IsNullOrEmpty(preview))
