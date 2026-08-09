@@ -9,6 +9,23 @@ namespace NoMoreEquals.Services;
 /// <summary>
 /// Tracks IME composition via window subclass + IMM.
 /// Exposes live COMPSTR and committed RESULTSTR without relying on noisy game RawString.
+/// <para>
+/// Two independent channels hang off this type, and they have different owners:
+/// </para>
+/// <list type="bullet">
+/// <item>
+/// <b>Preview channel</b> (<see cref="PeekCommittedResults"/> /
+/// <see cref="ClearPreviewResults"/>) — every RESULTSTR we saw, in Chinese form.
+/// Owned by <see cref="ChatPreviewOverlay"/>. Purely cosmetic.
+/// </item>
+/// <item>
+/// <b>Insert channel</b> (<see cref="HasPendingInsert"/> /
+/// <see cref="TryConsumePendingInsert"/> / <see cref="ClearPendingInsert"/>) —
+/// converted text whose original RESULTSTR we stripped from the game. Owned by
+/// <see cref="ChatInputWatcher"/>. Once queued, this is the <i>only</i> copy of
+/// what the player typed, so dropping it loses characters.
+/// </item>
+/// </list>
 /// </summary>
 internal sealed class ImeCompositionTracker : IDisposable
 {
@@ -16,26 +33,28 @@ internal sealed class ImeCompositionTracker : IDisposable
     private const uint WmImeEndComposition = 0x010E;
     private const uint WmImeComposition = 0x010F;
     private const uint WmKeyDown = 0x0100;
-    private const uint WmSysKeyDown = 0x0104;
     private const nint VkReturn = 0x0D;
+    private const long KeyRepeatFlag = 1L << 30;
     private const uint GcsCompStr = 0x0008;
     private const uint GcsResultStr = 0x0800;
     private const nuint SubclassId = 0x4E4D4531; // 'NME1'
 
     private readonly SubclassProc subclassProc;
-    private readonly object gate = new();
+    private readonly ChatImeGate gate;
+    private readonly object stateLock = new();
     private IntPtr hwnd;
     private bool subclassInstalled;
     private bool wndProcComposing;
     private bool wasComposing;
-    private long compositionEndedTimestamp;
+    private long pendingInsertQueuedTimestamp;
     private int cachedPid;
     private string pendingResults = string.Empty;
     private string pendingInsertConverted = string.Empty;
     private string pendingInsertOriginal = string.Empty;
 
-    public ImeCompositionTracker()
+    public ImeCompositionTracker(ChatImeGate gate)
     {
+        this.gate = gate;
         this.subclassProc = this.OnSubclass;
     }
 
@@ -55,86 +74,25 @@ internal sealed class ImeCompositionTracker : IDisposable
     /// <summary>
     /// When false, Imm RESULTSTR/COMPSTR are ignored for chat conversion + preview
     /// (e.g. focus is in a Dalamud ImGui text field while ChatLog still reports IsActive).
-    /// Updated each framework tick from ChatInputWatcher.
+    /// Owned by <see cref="ChatImeGate"/>; this type only reads it.
     /// </summary>
-    public volatile bool AcceptChatIme;
+    public bool AcceptChatIme => this.gate.Accept;
+
+    /// <summary>Game window we are subclassed onto, or zero. Used to sanity-check SendInput.</summary>
+    public IntPtr WindowHandle => this.hwnd;
 
     public bool IsComposing { get; private set; }
 
     /// <summary>Current in-progress composition (Bopomofo / reading), from IMM only.</summary>
     public string Composition { get; private set; } = string.Empty;
 
-    public TimeSpan TimeSinceCompositionEnded
+    /// <summary>Age of the oldest un-flushed entry in the insert channel.</summary>
+    public TimeSpan TimeSincePendingInsertQueued
     {
         get
         {
-            if (this.compositionEndedTimestamp == 0)
-                return Timeout.InfiniteTimeSpan;
-
-            return Stopwatch.GetElapsedTime(this.compositionEndedTimestamp);
-        }
-    }
-
-    public void Refresh(string? inputTextHint = null)
-    {
-        this.EnsureSubclass();
-
-        if (!this.AcceptChatIme)
-        {
-            if (this.wasComposing)
-                this.compositionEndedTimestamp = Stopwatch.GetTimestamp();
-
-            this.wasComposing = false;
-            this.wndProcComposing = false;
-            this.IsComposing = false;
-            this.Composition = string.Empty;
-            return;
-        }
-
-        var immComp = this.PollImmComposition();
-        var heuristic = HeuristicBopomofo(inputTextHint);
-
-        var composing = this.wndProcComposing || !string.IsNullOrEmpty(immComp) || heuristic.Length > 0;
-        if (this.wasComposing && !composing)
-            this.compositionEndedTimestamp = Stopwatch.GetTimestamp();
-
-        this.wasComposing = composing;
-        this.IsComposing = composing;
-        this.Composition = !string.IsNullOrEmpty(immComp)
-            ? immComp
-            : heuristic;
-    }
-
-    /// <summary>Peek RESULTSTR chunks captured since last consume (does not clear).</summary>
-    public string PeekCommittedResults()
-    {
-        lock (this.gate)
-            return this.pendingResults;
-    }
-
-    /// <summary>Drain RESULTSTR chunks captured from WM_IME_COMPOSITION since last call.</summary>
-    public string ConsumeCommittedResults()
-    {
-        lock (this.gate)
-        {
-            var result = this.pendingResults;
-            this.pendingResults = string.Empty;
-            return result;
-        }
-    }
-
-    /// <summary>
-    /// Converted text that should be InsertText'd because we suppressed Imm's RESULTSTR.
-    /// </summary>
-    public bool TryConsumePendingInsert(out string converted, out string originalChinese)
-    {
-        lock (this.gate)
-        {
-            converted = this.pendingInsertConverted;
-            originalChinese = this.pendingInsertOriginal;
-            this.pendingInsertConverted = string.Empty;
-            this.pendingInsertOriginal = string.Empty;
-            return !string.IsNullOrEmpty(converted);
+            lock (this.stateLock)
+                return Elapsed(this.pendingInsertQueuedTimestamp);
         }
     }
 
@@ -142,51 +100,24 @@ internal sealed class ImeCompositionTracker : IDisposable
     {
         get
         {
-            lock (this.gate)
+            lock (this.stateLock)
                 return this.pendingInsertConverted.Length > 0;
         }
     }
 
-    /// <summary>Drop queued Imm RESULTSTR peek state used by the preview shadow.</summary>
-    public void ClearPeekResults()
+    /// <summary>
+    /// Install or remove the window subclass. Must be driven unconditionally once per
+    /// frame: everything else in the pipeline (RESULTSTR rewriting, the pre-send
+    /// conversion, composition state) only happens while the subclass is installed.
+    /// </summary>
+    public void SyncSubclass(bool wanted)
     {
-        lock (this.gate)
-            this.pendingResults = string.Empty;
-    }
-
-    /// <summary>Drop queued RESULTSTR / InsertText state (e.g. chat buffer was cleared for real).</summary>
-    public void ClearPendingCommits()
-    {
-        lock (this.gate)
+        if (!wanted)
         {
-            this.pendingResults = string.Empty;
-            this.pendingInsertConverted = string.Empty;
-            this.pendingInsertOriginal = string.Empty;
-        }
-    }
-
-    public void Dispose() => this.RemoveSubclass();
-
-    private void QueueInsert(string original, string converted)
-    {
-        lock (this.gate)
-        {
-            this.pendingInsertOriginal += original;
-            this.pendingInsertConverted += converted;
-        }
-    }
-
-    private void AppendResult(string result)
-    {
-        if (string.IsNullOrEmpty(result))
+            this.RemoveSubclass();
             return;
+        }
 
-        lock (this.gate)
-            this.pendingResults += result;
-    }
-
-    private void EnsureSubclass()
-    {
         var gameHwnd = this.FindGameWindowHandle();
         if (gameHwnd == IntPtr.Zero)
             return;
@@ -197,6 +128,107 @@ internal sealed class ImeCompositionTracker : IDisposable
         this.RemoveSubclass();
         this.hwnd = gameHwnd;
         this.subclassInstalled = SetWindowSubclass(this.hwnd, this.subclassProc, SubclassId, IntPtr.Zero);
+    }
+
+    /// <summary>
+    /// Recompute composition state from IMM. Called once per framework tick by
+    /// <see cref="ChatInputWatcher"/>, which is the only owner of this state.
+    /// </summary>
+    public void Refresh(string? inputTextHint = null)
+    {
+        if (!this.AcceptChatIme)
+        {
+            this.wasComposing = false;
+            this.wndProcComposing = false;
+            this.IsComposing = false;
+            this.Composition = string.Empty;
+            return;
+        }
+
+        var immComp = this.PollImmComposition();
+        var heuristic = ChatBufferHeuristics.TrailingBopomofo(inputTextHint);
+
+        var composing = this.wndProcComposing || !string.IsNullOrEmpty(immComp) || heuristic.Length > 0;
+        this.wasComposing = composing;
+        this.IsComposing = composing;
+        this.Composition = !string.IsNullOrEmpty(immComp)
+            ? immComp
+            : heuristic;
+    }
+
+    /// <summary>
+    /// Preview channel: RESULTSTR chunks captured since the last
+    /// <see cref="ClearPreviewResults"/>. Does not clear.
+    /// </summary>
+    public string PeekCommittedResults()
+    {
+        lock (this.stateLock)
+            return this.pendingResults;
+    }
+
+    /// <summary>Preview channel reset. Cosmetic only — never loses player text.</summary>
+    public void ClearPreviewResults()
+    {
+        lock (this.stateLock)
+            this.pendingResults = string.Empty;
+    }
+
+    /// <summary>
+    /// Insert channel: take the converted text that must be InsertText'd because we
+    /// suppressed Imm's RESULTSTR. <paramref name="originalChinese"/> is what the game
+    /// would have received, so the caller can fall back to it without losing input.
+    /// </summary>
+    public bool TryConsumePendingInsert(out string converted, out string originalChinese)
+    {
+        lock (this.stateLock)
+        {
+            converted = this.pendingInsertConverted;
+            originalChinese = this.pendingInsertOriginal;
+            this.pendingInsertConverted = string.Empty;
+            this.pendingInsertOriginal = string.Empty;
+            this.pendingInsertQueuedTimestamp = 0;
+            return !string.IsNullOrEmpty(converted);
+        }
+    }
+
+    /// <summary>
+    /// Insert channel reset. <b>Discards player input</b> — the original RESULTSTR was
+    /// already stripped from the game, so only call this once the text is provably
+    /// undeliverable. <see cref="ChatInputWatcher.DropPendingInsert"/> is the only caller.
+    /// </summary>
+    public void ClearPendingInsert()
+    {
+        lock (this.stateLock)
+        {
+            this.pendingInsertConverted = string.Empty;
+            this.pendingInsertOriginal = string.Empty;
+            this.pendingInsertQueuedTimestamp = 0;
+        }
+    }
+
+    public void Dispose() => this.RemoveSubclass();
+
+    private static TimeSpan Elapsed(long timestamp)
+        => timestamp == 0 ? Timeout.InfiniteTimeSpan : Stopwatch.GetElapsedTime(timestamp);
+
+    private void QueueInsert(string original, string converted)
+    {
+        lock (this.stateLock)
+        {
+            this.pendingInsertOriginal += original;
+            this.pendingInsertConverted += converted;
+            if (this.pendingInsertQueuedTimestamp == 0)
+                this.pendingInsertQueuedTimestamp = Stopwatch.GetTimestamp();
+        }
+    }
+
+    private void AppendResult(string result)
+    {
+        if (string.IsNullOrEmpty(result))
+            return;
+
+        lock (this.stateLock)
+            this.pendingResults += result;
     }
 
     private void RemoveSubclass()
@@ -214,9 +246,14 @@ internal sealed class ImeCompositionTracker : IDisposable
     {
         switch (msg)
         {
+            // WM_SYSKEYDOWN is deliberately not handled: Alt+Enter is the game's
+            // fullscreen toggle, and treating it as a send used to SetText the
+            // player's half-finished line out from under them.
             case WmKeyDown:
-            case WmSysKeyDown:
-                if (wParam == VkReturn && !this.wndProcComposing && this.AcceptChatIme)
+                if (wParam == VkReturn
+                    && (lParam.ToInt64() & KeyRepeatFlag) == 0
+                    && !this.wndProcComposing
+                    && this.AcceptChatIme)
                 {
                     // IME usually eats Return for candidate confirm, so this path is mostly "send chat".
                     // Run conversion before the game reads the input buffer.
@@ -239,11 +276,14 @@ internal sealed class ImeCompositionTracker : IDisposable
 
             case WmImeComposition:
             {
+                if (!this.AcceptChatIme)
+                    break;
+
                 var flags = unchecked((uint)lParam.ToInt64());
-                if ((flags & GcsCompStr) != 0 && this.AcceptChatIme)
+                if ((flags & GcsCompStr) != 0)
                     this.wndProcComposing = true;
 
-                if ((flags & GcsResultStr) != 0 && this.AcceptChatIme)
+                if ((flags & GcsResultStr) != 0)
                 {
                     var himc = ImmGetContext(hWnd);
                     if (himc != IntPtr.Zero)
@@ -273,7 +313,10 @@ internal sealed class ImeCompositionTracker : IDisposable
                                     // InsertText(converted) ourselves so prior text is untouched.
                                     this.QueueInsert(result, rewritten);
                                     flags &= ~GcsResultStr;
-                                    lParam = unchecked((IntPtr)(nint)flags);
+
+                                    // Preserve the high half of lParam; only the flag word is ours.
+                                    var high = lParam.ToInt64() & unchecked((long)0xFFFFFFFF00000000);
+                                    lParam = (IntPtr)(high | flags);
                                 }
                             }
                         }
@@ -289,7 +332,6 @@ internal sealed class ImeCompositionTracker : IDisposable
 
             case WmImeEndComposition:
                 this.wndProcComposing = false;
-                this.compositionEndedTimestamp = Stopwatch.GetTimestamp();
                 break;
         }
 
@@ -317,47 +359,6 @@ internal sealed class ImeCompositionTracker : IDisposable
             _ = ImmReleaseContext(this.hwnd, himc);
         }
     }
-
-    private static string HeuristicBopomofo(string? inputText)
-    {
-        if (string.IsNullOrEmpty(inputText))
-            return string.Empty;
-
-        // Only use heuristic when the trailing run is purely Bopomofo — never treat '=' noise as composition.
-        var end = inputText.Length;
-        var start = end;
-        while (start > 0 && IsBopomofo(inputText[start - 1]))
-            start--;
-
-        if (start == end)
-            return string.Empty;
-
-        // Reject if the hint string is dominated by '=' (game RawString corruption).
-        if (IsMostlyEqualsNoise(inputText))
-            return string.Empty;
-
-        return inputText[start..];
-    }
-
-    internal static bool IsMostlyEqualsNoise(string s)
-    {
-        if (string.IsNullOrEmpty(s) || s.Length < 3)
-            return false;
-
-        var eq = 0;
-        foreach (var c in s)
-        {
-            if (c == '=')
-                eq++;
-        }
-
-        return eq * 2 >= s.Length;
-    }
-
-    private static bool IsBopomofo(char c)
-        => c is (>= '\u3105' and <= '\u312F')
-            or (>= '\u31A0' and <= '\u31BF')
-            or '\u02C7' or '\u02C9' or '\u02CA' or '\u02CB' or '\u02D9';
 
     private static string GetCompositionString(IntPtr himc, uint index)
     {
