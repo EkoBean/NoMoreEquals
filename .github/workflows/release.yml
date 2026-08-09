@@ -43,6 +43,10 @@ jobs:
         shell: pwsh
         run: dotnet build $env:PROJECT_PATH -c Release --nologo
 
+      - name: Test
+        shell: pwsh
+        run: dotnet test tests/NoMoreEquals.Tests/NoMoreEquals.Tests.csproj -c Release --nologo
+
       - name: Verify tag matches plugin version, stage artifact
         shell: pwsh
         run: |
