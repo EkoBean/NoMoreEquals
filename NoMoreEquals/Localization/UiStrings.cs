@@ -84,5 +84,11 @@ internal sealed class UiStrings
 
     public required string GlyphNeedSingleChar { get; init; }
 
+    /// <summary>
+    /// Shown by both the glyph and phrase sections: the reason a pure-ASCII source is
+    /// refused is the same in either place.
+    /// </summary>
+    public required string SourceNeedChineseError { get; init; }
+
     public required string RebuiltStatus { get; init; }
 }

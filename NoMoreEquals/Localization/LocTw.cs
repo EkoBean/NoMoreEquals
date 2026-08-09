@@ -54,6 +54,7 @@ internal static class LocTw
         PhraseRemoved = "已刪除替代詞彙。",
         GlyphAdded = "已新增單字：{0} → {1}",
         GlyphNeedSingleChar = "單字對照兩邊都必須剛好一個字，且不相同。",
+        SourceNeedChineseError = "原文必須包含中文字，這個插件只轉換中文字形。",
         RebuiltStatus = "已重建。缺字對照 {0}，替代詞彙 {1}",
     };
 }

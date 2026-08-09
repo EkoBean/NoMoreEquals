@@ -185,6 +185,13 @@ internal sealed class MainTab
             return;
         }
 
+        // Ahead of the same-as check so that "abc" -> "abc" reports the real problem.
+        if (!ChineseScript.HasChineseCharacter(from))
+        {
+            this.context.StatusMessage = t.SourceNeedChineseError;
+            return;
+        }
+
         if (string.Equals(from, to, StringComparison.Ordinal))
         {
             this.context.StatusMessage = t.PhraseSameError;
@@ -211,6 +218,12 @@ internal sealed class MainTab
             || zh == jp)
         {
             this.context.StatusMessage = t.GlyphNeedSingleChar;
+            return;
+        }
+
+        if (!ChineseScript.HasChineseCharacter(zh.ToString()))
+        {
+            this.context.StatusMessage = t.SourceNeedChineseError;
             return;
         }
 
