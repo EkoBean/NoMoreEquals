@@ -11,4 +11,8 @@
     <Platform>x64</Platform>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="NoMoreEquals.Tests" />
+  </ItemGroup>
 </Project>
