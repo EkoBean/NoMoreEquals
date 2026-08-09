@@ -21,7 +21,7 @@
 
 ## 白名單
 
-來源：Lodestone Eorzea Database 與 FFXIV Console Games Wiki 兩份獨立來源互相驗證，加上遊戲內實測補上兩份文件都漏掉的別名（`/beginner`、`/b`、`/cwls` 家族）。共 **71** 個 token（不含開頭的 `/`）。
+來源：Lodestone Eorzea Database 與 FFXIV Console Games Wiki 兩份獨立來源互相驗證，加上遊戲內實測補上兩份文件都漏掉的 `/beginner`、`/b`。共 **62** 個 token（不含開頭的 `/`）。
 
 | 頻道 | 長名 | 短名 |
 |---|---|---|
@@ -39,20 +39,24 @@
 | Emote | `emote` | `em` |
 | Linkshell（現用） | `linkshell` | `l` |
 | Linkshell 1–8 | `linkshell1` … `linkshell8` | `l1` … `l8` |
-| CW Linkshell（現用） | `cwlinkshell` | `cwl`、`cwls` |
-| CW Linkshell 1–8 | `cwlinkshell1` … `cwlinkshell8` | `cwl1`…`cwl8`、`cwls1`…`cwls8` |
+| CW Linkshell（現用） | `cwlinkshell` | `cwl` |
+| CW Linkshell 1–8 | `cwlinkshell1` … `cwlinkshell8` | `cwl1` … `cwl8` |
 
-計數：13 長名 + 13 短名 + 9 linkshell + 9 l 系列 + 9 cwlinkshell + 9 cwl 系列 + 9 cwls 系列 = 71。
+計數：13 長名 + 13 短名 + 9 linkshell + 9 l 系列 + 9 cwlinkshell + 9 cwl 系列 = 62。
+
+兩個通訊貝家族都**只到 8**，因為遊戲本身各只有八個。`/l9`、`/cwl9` 不存在。
 
 ### 刻意排除
 
 - **`quickchat` / `qchat`** —— 參數是預設短語編號，不是自由文字。
+- **`cwls` / `cwls1`–`cwls8`** —— 玩家間流傳很廣，但遊戲內實測**不能用**，遊戲不認這個別名。
+- **`ls` / `ls1`–`ls8`** —— 同樣未經證實，未收錄。
 
 ### 文件查不到但實測可用
 
-`beginner` / `b`、`cwls` / `cwls1`–`cwls8` 在 Lodestone 官方資料庫與 Console Games Wiki 都沒有列出，但遊戲內實測確認可用，且是玩家日常在用的頻道指令。收錄。
+`beginner` / `b` 在 Lodestone 官方資料庫與 Console Games Wiki 都沒有列出，但遊戲內實測確認可用。收錄。
 
-判準是「有證據」而不是「有官方文件」—— 漏一個別名的代價是外掛在某個頻道無聲失效，玩家只會覺得它壞掉。
+判準是**有證據**，不是有官方文件；反過來說，光是「大家都這樣寫」不算證據 —— `cwls` 就是這樣被試出來又收掉的。漏一個真別名的代價是外掛在某個頻道無聲失效；多收一個假別名則沒有實際損害（那行指令本來就送不出去），但會讓白名單失去意義。
 
 ### 刻意不特別處理
 
@@ -209,7 +213,7 @@ if (!this.gate.ShouldConvert(raw)) return;       // 不繪製，但不重設影�
 這是刻意接受的：`ConversionGate` 只有三行組合邏輯（三個 property 讀取加一次委派），會出錯的東西全在 `ChatLineScope` 與 `ChatChannelCommands` 裡，而那兩個是純函式、零 Dalamud 依賴、可以測到滿。為了讓一個三行的類別可測而把 `Configuration` 換成 `Func<bool>` 注入，是為儀式付錢。
 
 - **`ChatLineScopeTests`**（新）—— 上方邊界表逐列一個 `[InlineData]`，同時驗證 `Convertible` 與 `BodyStart`。
-- **`ChatChannelCommandsTests`**（新）—— 71 個 token 全數命中；`linkshell1`–`8`、`l1`–`8`、`cwlinkshell1`–`8`、`cwl1`–`8`、`cwls1`–`8` 五個編號家族完整（防手打漏字）；`gearset`、`nme`、`quickchat`、`qchat`、`ls1` 確實落空。另外釘住集合大小為 71：兩個方向的危險程度不對等 —— 少一個 token 上面那些測試就會紅，多一個 token 卻會擴大外掛改寫的範圍且悄無聲息。要改這個數字就得連同上方表格一起改，也就等於逼出「這個新條目的來源是什麼」。
+- **`ChatChannelCommandsTests`**（新）—— 62 個 token 全數命中；`linkshell1`–`8`、`l1`–`8`、`cwlinkshell1`–`8`、`cwl1`–`8` 四個編號家族完整（防手打漏字）；`gearset`、`nme`、`quickchat`、`qchat`、`ls1`、`cwls`、`cwls1` 確實落空，`linkshell9`、`l9`、`cwl9` 亦然（家族只到 8）。另外釘住集合大小為 62：兩個方向的危險程度不對等 —— 少一個 token 上面那些測試就會紅，多一個 token 卻會擴大外掛改寫的範圍且悄無聲息。要改這個數字就得連同上方表格一起改，也就等於逼出「這個新條目的來源是什麼」。
 - **`KanjiConverterTests`**（改）—— 刪除 `GetChatBodyStart_*` 與 `IsInsideCommandToken_*` 兩組；新增 `ConvertChatLine_LeavesNonChatCommandAlone`（`/gearset 綠` 原樣回傳）；保留 `ConvertChatLine_ConvertsCommandArgumentsButNotTheCommand`、`ConvertChatLine_ConvertsAnOrdinaryLineWhole`、`ConvertChatLine_AppliesPhrasesBeforeGlyphs`。
 
 ## 範圍之外

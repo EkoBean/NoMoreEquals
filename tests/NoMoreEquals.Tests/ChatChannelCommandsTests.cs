@@ -39,7 +39,6 @@ public class ChatChannelCommandsTests
     [InlineData("l")]
     [InlineData("cwlinkshell")]
     [InlineData("cwl")]
-    [InlineData("cwls")]
     public void IsChatChannel_AcceptsTheUnnumberedChannelTokens(string token)
     {
         Assert.True(ChatChannelCommands.IsChatChannel(token));
@@ -54,7 +53,7 @@ public class ChatChannelCommandsTests
     [Fact]
     public void Count_MatchesTheDocumentedWhitelistSize()
     {
-        Assert.Equal(71, ChatChannelCommands.Count);
+        Assert.Equal(62, ChatChannelCommands.Count);
     }
 
     /// <summary>
@@ -71,7 +70,6 @@ public class ChatChannelCommandsTests
             Assert.True(ChatChannelCommands.IsChatChannel($"l{i}"));
             Assert.True(ChatChannelCommands.IsChatChannel($"cwlinkshell{i}"));
             Assert.True(ChatChannelCommands.IsChatChannel($"cwl{i}"));
-            Assert.True(ChatChannelCommands.IsChatChannel($"cwls{i}"));
         }
     }
 
@@ -93,6 +91,12 @@ public class ChatChannelCommandsTests
     [InlineData("quickchat")]     // argument is a preset id, not free text
     [InlineData("qchat")]
     [InlineData("ls1")]
+    [InlineData("cwls")]          // circulates among players but the game rejects it
+    [InlineData("cwls1")]
+    [InlineData("linkshell9")]    // there are only ever eight of each
+    [InlineData("cwlinkshell9")]
+    [InlineData("l9")]
+    [InlineData("cwl9")]
     [InlineData("/p")]            // a second slash is not a chat command
     public void IsChatChannel_RejectsEverythingElse(string token)
     {
