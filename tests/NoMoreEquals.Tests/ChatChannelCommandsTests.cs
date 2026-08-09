@@ -17,6 +17,7 @@ public class ChatChannelCommandsTests
     [InlineData("freecompany")]
     [InlineData("pvpteam")]
     [InlineData("novice")]
+    [InlineData("beginner")]
     [InlineData("echo")]
     [InlineData("emote")]
     // Short forms.
@@ -30,6 +31,7 @@ public class ChatChannelCommandsTests
     [InlineData("fc")]
     [InlineData("pt")]
     [InlineData("n")]
+    [InlineData("b")]
     [InlineData("e")]
     [InlineData("em")]
     // Unnumbered linkshell channels (the currently active one).
@@ -37,6 +39,7 @@ public class ChatChannelCommandsTests
     [InlineData("l")]
     [InlineData("cwlinkshell")]
     [InlineData("cwl")]
+    [InlineData("cwls")]
     public void IsChatChannel_AcceptsTheUnnumberedChannelTokens(string token)
     {
         Assert.True(ChatChannelCommands.IsChatChannel(token));
@@ -51,7 +54,7 @@ public class ChatChannelCommandsTests
     [Fact]
     public void Count_MatchesTheDocumentedWhitelistSize()
     {
-        Assert.Equal(60, ChatChannelCommands.Count);
+        Assert.Equal(71, ChatChannelCommands.Count);
     }
 
     /// <summary>
@@ -68,6 +71,7 @@ public class ChatChannelCommandsTests
             Assert.True(ChatChannelCommands.IsChatChannel($"l{i}"));
             Assert.True(ChatChannelCommands.IsChatChannel($"cwlinkshell{i}"));
             Assert.True(ChatChannelCommands.IsChatChannel($"cwl{i}"));
+            Assert.True(ChatChannelCommands.IsChatChannel($"cwls{i}"));
         }
     }
 
@@ -88,9 +92,6 @@ public class ChatChannelCommandsTests
     [InlineData("nme")]           // this plugin's own command
     [InlineData("quickchat")]     // argument is a preset id, not free text
     [InlineData("qchat")]
-    [InlineData("beginner")]      // not a documented alias for the Novice Network
-    [InlineData("b")]
-    [InlineData("cwls1")]         // not a documented alias for /cwlinkshell1
     [InlineData("ls1")]
     [InlineData("/p")]            // a second slash is not a chat command
     public void IsChatChannel_RejectsEverythingElse(string token)

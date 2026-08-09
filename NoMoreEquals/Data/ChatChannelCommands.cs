@@ -14,10 +14,11 @@ namespace NoMoreEquals.Data;
 /// </para>
 /// <para>
 /// Sourced from the Lodestone Eorzea Database and the FFXIV Console Games Wiki, which
-/// agree. Aliases that circulate among players but appear in neither (<c>/beginner</c>,
-/// <c>/cwls1</c>) are deliberately absent: an entry here silently changes what the
-/// plugin rewrites, so it needs a source. <c>/quickchat</c> is excluded for the same
-/// reason as <c>/gearset</c> — its argument is a preset id.
+/// agree with each other, plus in-game verification for the aliases those two omit:
+/// <c>/beginner</c>, <c>/b</c> and the <c>/cwls</c> family are undocumented but do work,
+/// and players use them daily. An entry here silently changes what the plugin rewrites,
+/// so each one needs one of those two kinds of evidence behind it. <c>/quickchat</c> is
+/// excluded for the same reason as <c>/gearset</c> — its argument is a preset id.
 /// </para>
 /// </summary>
 internal static class ChatChannelCommands
@@ -41,6 +42,7 @@ internal static class ChatChannelCommands
             "freecompany", "fc",
             "pvpteam", "pt",
             "novice", "n",
+            "beginner", "b",
             "echo", "e",
             "emote", "em",
             "linkshell", "l",
@@ -52,15 +54,15 @@ internal static class ChatChannelCommands
             "linkshell6", "l6",
             "linkshell7", "l7",
             "linkshell8", "l8",
-            "cwlinkshell", "cwl",
-            "cwlinkshell1", "cwl1",
-            "cwlinkshell2", "cwl2",
-            "cwlinkshell3", "cwl3",
-            "cwlinkshell4", "cwl4",
-            "cwlinkshell5", "cwl5",
-            "cwlinkshell6", "cwl6",
-            "cwlinkshell7", "cwl7",
-            "cwlinkshell8", "cwl8",
+            "cwlinkshell", "cwl", "cwls",
+            "cwlinkshell1", "cwl1", "cwls1",
+            "cwlinkshell2", "cwl2", "cwls2",
+            "cwlinkshell3", "cwl3", "cwls3",
+            "cwlinkshell4", "cwl4", "cwls4",
+            "cwlinkshell5", "cwl5", "cwls5",
+            "cwlinkshell6", "cwl6", "cwls6",
+            "cwlinkshell7", "cwl7", "cwls7",
+            "cwlinkshell8", "cwl8", "cwls8",
         }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>

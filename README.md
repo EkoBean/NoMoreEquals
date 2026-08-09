@@ -42,11 +42,11 @@ So you can use another customization to decide what to replace.
 
 ## Slash commands 斜線指令
 
-Conversion only runs on lines that go to a chat channel. `/say`, `/p`, `/tell`, `/fc`, `/l1`–`/l8`, `/cwl1`–`/cwl8`, `/em` and the rest of the chat commands have their message converted, with the command itself left untouched. Everything else — `/gearset`, `/target`, other plugins' commands — is left completely alone: no conversion, no preview. Their arguments are identifiers, not messages, and substituting a glyph there would break the command.
+Conversion only runs on lines that go to a chat channel. `/say`, `/p`, `/tell`, `/fc`, `/b`, `/l1`–`/l8`, `/cwls1`–`/cwls8`, `/em` and the rest of the chat commands have their message converted, with the command itself left untouched. Everything else — `/gearset`, `/target`, other plugins' commands — is left completely alone: no conversion, no preview. Their arguments are identifiers, not messages, and substituting a glyph there would break the command.
 
 While you are still typing the command itself (no space yet), nothing happens either — the line could still turn out to be either kind.
 
-只有會送進聊天頻道的行才會轉換。`/say`、`/p`、`/tell`、`/fc`、`/l1`–`/l8`、`/cwl1`–`/cwl8`、`/em` 等聊天指令會轉換訊息本文，指令詞本身不動。其他指令（`/gearset`、`/target`、其他插件的指令）完全不介入，不轉換也不顯示預覽 —— 那些參數是識別碼不是訊息，換掉字形會讓指令失效。
+只有會送進聊天頻道的行才會轉換。`/say`、`/p`、`/tell`、`/fc`、`/b`、`/l1`–`/l8`、`/cwls1`–`/cwls8`、`/em` 等聊天指令會轉換訊息本文，指令詞本身不動。其他指令（`/gearset`、`/target`、其他插件的指令）完全不介入，不轉換也不顯示預覽 —— 那些參數是識別碼不是訊息，換掉字形會讓指令失效。
 
 指令詞還沒打完（還沒有空格）時同樣不作用，因為那時還看不出來是哪一種。
 
