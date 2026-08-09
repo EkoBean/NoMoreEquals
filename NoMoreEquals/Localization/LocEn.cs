@@ -49,11 +49,7 @@ internal static class LocEn
         AdvancedOverviewCustom = "Custom",
         PhraseEmptyError = "From text cannot be empty.",
         PhraseSameError = "From and To are identical; nothing to add.",
-        PhraseAdded = "Phrase set: {0} → {1}",
-        PhraseRemoved = "Phrase removed.",
-        GlyphAdded = "Character mapping added: {0} → {1}",
         GlyphNeedSingleChar = "Each side must be exactly one distinct character.",
         SourceNeedChineseError = "From must contain at least one Chinese character; this plugin only converts Chinese glyphs.",
-        RebuiltStatus = "Rebuilt. Glyph mappings: {0}, phrases: {1}",
     };
 }

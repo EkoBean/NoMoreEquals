@@ -37,16 +37,10 @@ internal sealed class AdvancedTab
             this.context.ApplyAndSave();
         }
 
+        // No confirmation message: the counts at the top of the window are recomputed by
+        // the rebuild and already say what happened.
         if (ImGui.Button(t.RebuildFromFont))
-        {
             this.context.Plugin.RebuildAll();
-            this.context.SetStatus(
-                StatusSlot.Window,
-                string.Format(
-                    t.RebuiltStatus,
-                    this.context.Plugin.MapService.ActiveCount,
-                    this.context.Plugin.PhraseService.EnabledCount));
-        }
 
         ImGui.Spacing();
         ImGui.Separator();

@@ -25,6 +25,15 @@ internal sealed class MainTab
     private string newPhraseTo = string.Empty;
     private string previewInput = string.Empty;
 
+    /// <summary>
+    /// Why the last add attempt was refused, or empty. Two states, nothing else — there
+    /// is no feedback for success, for a deletion, or for anything that worked. Those
+    /// results are already visible in the list right below the button.
+    /// </summary>
+    private string phraseError = string.Empty;
+
+    private string glyphError = string.Empty;
+
     public MainTab(ConfigWindowContext context)
     {
         this.context = context;
@@ -32,6 +41,16 @@ internal sealed class MainTab
 
     public void Draw(UiStrings t)
     {
+        // Any mouse press dismisses a pending error: clicking back into a field, or
+        // anywhere else at all. ImGui activates a button on release, so the press that
+        // begins a click on Add clears the old message a frame before the release raises
+        // a new one — the two never race.
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+        {
+            this.phraseError = string.Empty;
+            this.glyphError = string.Empty;
+        }
+
         this.DrawPreviewSection(t);
 
         ImGui.Separator();
@@ -91,13 +110,17 @@ internal sealed class MainTab
 
         var half = UiHelpers.HalfFieldWidth();
         ImGui.SetNextItemWidth(half);
-        ImGui.InputTextWithHint("##phraseFrom", t.PhraseFrom, ref this.newPhraseFrom, 64);
+        // Typing counts as dismissing it too, for anyone who never touches the mouse.
+        if (ImGui.InputTextWithHint("##phraseFrom", t.PhraseFrom, ref this.newPhraseFrom, 64))
+            this.phraseError = string.Empty;
+
         ImGui.SameLine();
         ImGui.SetNextItemWidth(half);
-        ImGui.InputTextWithHint("##phraseTo", t.PhraseTo, ref this.newPhraseTo, 64);
+        if (ImGui.InputTextWithHint("##phraseTo", t.PhraseTo, ref this.newPhraseTo, 64))
+            this.phraseError = string.Empty;
 
-        if (this.context.HasStatusFor(StatusSlot.Phrase))
-            UiHelpers.StatusText(this.context.StatusMessage);
+        if (this.phraseError.Length > 0)
+            UiHelpers.StatusText(this.phraseError);
 
         if (ImGui.Button($"{t.AddPhrase}##addPhrase", new Vector2(-1, 0)))
             this.TryAddPhrase(t);
@@ -128,7 +151,6 @@ internal sealed class MainTab
         {
             phrases.RemoveAt(removeAt);
             this.context.ApplyAndSave();
-            this.context.SetStatus(StatusSlot.Phrase, t.PhraseRemoved);
         }
 
         if (phrases.Count == 0)
@@ -144,13 +166,16 @@ internal sealed class MainTab
 
         var half = UiHelpers.HalfFieldWidth();
         ImGui.SetNextItemWidth(half);
-        ImGui.InputTextWithHint("##glyphFrom", t.GlyphFrom, ref this.newGlyphFrom, 8);
+        if (ImGui.InputTextWithHint("##glyphFrom", t.GlyphFrom, ref this.newGlyphFrom, 8))
+            this.glyphError = string.Empty;
+
         ImGui.SameLine();
         ImGui.SetNextItemWidth(half);
-        ImGui.InputTextWithHint("##glyphTo", t.GlyphTo, ref this.newGlyphTo, 8);
+        if (ImGui.InputTextWithHint("##glyphTo", t.GlyphTo, ref this.newGlyphTo, 8))
+            this.glyphError = string.Empty;
 
-        if (this.context.HasStatusFor(StatusSlot.Glyph))
-            UiHelpers.StatusText(this.context.StatusMessage);
+        if (this.glyphError.Length > 0)
+            UiHelpers.StatusText(this.glyphError);
 
         if (ImGui.Button($"{t.AddGlyph}##addGlyph", new Vector2(-1, 0)))
             this.TryAddGlyph(t);
@@ -189,20 +214,20 @@ internal sealed class MainTab
 
         if (string.IsNullOrEmpty(from))
         {
-            this.context.SetStatus(StatusSlot.Phrase, t.PhraseEmptyError);
+            this.phraseError = t.PhraseEmptyError;
             return;
         }
 
         // Ahead of the same-as check so that "abc" -> "abc" reports the real problem.
         if (!ChineseScript.HasChineseCharacter(from))
         {
-            this.context.SetStatus(StatusSlot.Phrase, t.SourceNeedChineseError);
+            this.phraseError = t.SourceNeedChineseError;
             return;
         }
 
         if (string.Equals(from, to, StringComparison.Ordinal))
         {
-            this.context.SetStatus(StatusSlot.Phrase, t.PhraseSameError);
+            this.phraseError = t.PhraseSameError;
             return;
         }
 
@@ -216,7 +241,7 @@ internal sealed class MainTab
         this.context.ApplyAndSave();
         this.newPhraseFrom = string.Empty;
         this.newPhraseTo = string.Empty;
-        this.context.SetStatus(StatusSlot.Phrase, string.Format(t.PhraseAdded, from, to));
+        this.phraseError = string.Empty;
     }
 
     private void TryAddGlyph(UiStrings t)
@@ -225,13 +250,13 @@ internal sealed class MainTab
             || !KanjiMapService.TryParseSingleChar(this.newGlyphTo, out var jp)
             || zh == jp)
         {
-            this.context.SetStatus(StatusSlot.Glyph, t.GlyphNeedSingleChar);
+            this.glyphError = t.GlyphNeedSingleChar;
             return;
         }
 
         if (!ChineseScript.HasChineseCharacter(zh.ToString()))
         {
-            this.context.SetStatus(StatusSlot.Glyph, t.SourceNeedChineseError);
+            this.glyphError = t.SourceNeedChineseError;
             return;
         }
 
@@ -239,6 +264,6 @@ internal sealed class MainTab
         this.context.ApplyAndSave();
         this.newGlyphFrom = string.Empty;
         this.newGlyphTo = string.Empty;
-        this.context.SetStatus(StatusSlot.Glyph, string.Format(t.GlyphAdded, zh, jp));
+        this.glyphError = string.Empty;
     }
 }

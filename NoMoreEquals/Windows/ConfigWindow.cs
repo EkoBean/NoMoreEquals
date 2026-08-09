@@ -80,13 +80,5 @@ internal sealed class ConfigWindow : Window
 
             ImGui.EndTabBar();
         }
-
-        // Only what has no home of its own. Feedback raised by the phrase and glyph forms
-        // is drawn beside the button that raised it, not down here.
-        if (this.context.HasStatusFor(StatusSlot.Window))
-        {
-            ImGui.Spacing();
-            UiHelpers.StatusText(this.context.StatusMessage);
-        }
     }
 }

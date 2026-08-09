@@ -76,12 +76,6 @@ internal sealed class UiStrings
 
     public required string PhraseSameError { get; init; }
 
-    public required string PhraseAdded { get; init; }
-
-    public required string PhraseRemoved { get; init; }
-
-    public required string GlyphAdded { get; init; }
-
     public required string GlyphNeedSingleChar { get; init; }
 
     /// <summary>
@@ -89,6 +83,4 @@ internal sealed class UiStrings
     /// refused is the same in either place.
     /// </summary>
     public required string SourceNeedChineseError { get; init; }
-
-    public required string RebuiltStatus { get; init; }
 }

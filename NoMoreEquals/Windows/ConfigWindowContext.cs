@@ -17,26 +17,6 @@ internal sealed class ConfigWindowContext
 
     public Configuration Configuration => this.plugin.Configuration;
 
-    /// <summary>One-line feedback, rendered wherever <see cref="StatusSlot"/> says.</summary>
-    public string StatusMessage { get; private set; } = string.Empty;
-
-    /// <summary>Which part of the UI the current <see cref="StatusMessage"/> belongs to.</summary>
-    public StatusSlot StatusSlot { get; private set; } = StatusSlot.Window;
-
-    /// <summary>
-    /// Replace the visible feedback. One message at a time, as before — the slot only
-    /// decides where it is drawn, not how many can be on screen.
-    /// </summary>
-    public void SetStatus(StatusSlot slot, string message)
-    {
-        this.StatusSlot = slot;
-        this.StatusMessage = message;
-    }
-
-    /// <summary>Whether the current message is one <paramref name="slot"/> should draw.</summary>
-    public bool HasStatusFor(StatusSlot slot)
-        => this.StatusSlot == slot && this.StatusMessage.Length > 0;
-
     /// <summary>Persist a setting that does not affect the conversion tables.</summary>
     public void Save() => this.plugin.ConfigService.Save();
 
