@@ -17,9 +17,13 @@ internal sealed class PhraseReplacementService
     /// <summary>Active (enabled) phrase rules, longest-match order.</summary>
     public IReadOnlyList<PhraseReplacement> Active => this.ordered;
 
-    public void Rebuild(Configuration config)
+    /// <summary>
+    /// Takes the rules rather than the whole <see cref="Configuration"/> so this stays
+    /// independent of Dalamud's <c>IPluginConfiguration</c> and can be exercised directly.
+    /// </summary>
+    public void Rebuild(IEnumerable<PhraseReplacement> replacements)
     {
-        this.ordered = config.PhraseReplacements
+        this.ordered = replacements
             .Where(p => p.Enabled
                         && !string.IsNullOrEmpty(p.From)
                         && p.To is not null

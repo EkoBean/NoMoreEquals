@@ -1,29 +1,31 @@
 using System;
 using System.IO;
 using System.Numerics;
-using System.Threading;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace NoMoreEquals.Services;
 
 /// <summary>
 /// Live preview above ChatLog. Built from an Imm-backed committed shadow + live COMPSTR,
 /// never from noisy in-IME RawString. Rendered with a CJK system font so text stays readable.
+/// <para>
+/// Strictly a view. It owns <see cref="committedShadow"/> and the preview channel
+/// (<see cref="ImeCompositionTracker.ClearPreviewResults"/>) and nothing else: it does
+/// not set the IME gate, does not drive <see cref="ImeCompositionTracker.Refresh"/>, and
+/// must never touch the insert channel. It previously did all three, which is why a
+/// display checkbox could change — or completely disable — input behaviour.
+/// </para>
 /// </summary>
 internal sealed class ChatPreviewOverlay : IDisposable
 {
-    private const string ChatLogAddonName = "ChatLog";
     private const float VerticalGap = 4f;
 
     private readonly Configuration configuration;
     private readonly KanjiMapService mapService;
     private readonly PhraseReplacementService phraseService;
-    private readonly IGameGui gameGui;
+    private readonly ChatInputAccessor accessor;
     private readonly ImeCompositionTracker imeTracker;
     private readonly IFontHandle previewFont;
 
@@ -37,14 +39,14 @@ internal sealed class ChatPreviewOverlay : IDisposable
         Configuration configuration,
         KanjiMapService mapService,
         PhraseReplacementService phraseService,
-        IGameGui gameGui,
+        ChatInputAccessor accessor,
         ImeCompositionTracker imeTracker,
         IDalamudPluginInterface pluginInterface)
     {
         this.configuration = configuration;
         this.mapService = mapService;
         this.phraseService = phraseService;
-        this.gameGui = gameGui;
+        this.accessor = accessor;
         this.imeTracker = imeTracker;
         this.previewFont = CreateCjkFontHandle(pluginInterface);
     }
@@ -61,37 +63,18 @@ internal sealed class ChatPreviewOverlay : IDisposable
 
         try
         {
-            var chatUnit = this.gameGui.GetAddonByName(ChatLogAddonName);
-            if (chatUnit.IsNull || !chatUnit.IsReady || !chatUnit.IsVisible)
-                return;
-
-            var chatLog = this.gameGui.GetAddonByName<AddonChatLog>(ChatLogAddonName);
-            if (chatLog == null || chatLog->TextInput == null)
-                return;
-
-            var input = chatLog->TextInput;
-            if (!input->Enabled || !input->IsActive)
+            if (!this.accessor.TryGetActiveInput(out var input))
             {
-                this.imeTracker.AcceptChatIme = false;
-                this.ClearPreviewLifecycle();
+                this.ResetShadow();
                 return;
             }
 
-            // Prefer UiBuilder.Draw timing: WantTextInput is authoritative here.
-            this.imeTracker.AcceptChatIme = !ImGui.GetIO().WantTextInput;
-
-            if (!TryGetInputScreenRect(input, out var x, out var y, out var width, out _))
+            if (!ChatInputAccessor.TryGetScreenRect(input, out var x, out var y, out var width, out _))
                 return;
 
-            var raw = GetTextInputString(input);
-            // Slash commands are never converted; hide preview for those lines.
-            if (!string.IsNullOrEmpty(raw) && raw.StartsWith('/'))
-            {
-                this.ClearPreviewLifecycle();
-                return;
-            }
-
+            var raw = ChatInputAccessor.GetText(input);
             this.UpdateShadow(raw);
+
             var preview = this.BuildPreview();
             if (string.IsNullOrEmpty(preview))
                 return;
@@ -144,60 +127,32 @@ internal sealed class ChatPreviewOverlay : IDisposable
 
     private void UpdateShadow(string raw)
     {
-        // Gate first so Imm composition from Dalamud text fields is not treated as chat IME.
-        this.imeTracker.Refresh(
-            this.imeTracker.AcceptChatIme && !ImeCompositionTracker.IsMostlyEqualsNoise(raw)
-                ? raw
-                : null);
-
-        // ChatLog still "active" but keystrokes belong to ImGui — freeze on chat RawString only.
+        // ChatLog still "active" but keystrokes belong to ImGui — freeze on chat
+        // RawString only. Composition state itself is refreshed once per framework
+        // tick by ChatInputWatcher; reading it a phase later is at most one frame stale.
         if (!this.imeTracker.AcceptChatIme)
         {
-            this.imeTracker.ClearPeekResults();
-            if (string.IsNullOrEmpty(raw) || ImeCompositionTracker.IsMostlyEqualsNoise(raw))
-            {
-                this.committedShadow = string.Empty;
-                this.lastSeenPendingResults = string.Empty;
-            }
-            else
-            {
-                this.committedShadow = raw;
-                this.lastSeenPendingResults = string.Empty;
-            }
-
+            this.imeTracker.ClearPreviewResults();
+            this.lastSeenPendingResults = string.Empty;
+            this.committedShadow = IsBufferBlank(raw) ? string.Empty : raw;
             return;
         }
 
-        var chatEmpty = string.IsNullOrEmpty(raw)
-                        || ImeCompositionTracker.IsMostlyEqualsNoise(raw);
+        var chatEmpty = IsBufferBlank(raw);
 
-        // Lifecycle: empty chat box destroys preview strings.
-        // Keep a brief pending InsertText alive (first glyph on a blank line).
-        if (chatEmpty && !this.imeTracker.IsComposing)
+        // Lifecycle: an empty chat box destroys the preview strings. Anything still
+        // queued for InsertText is ChatInputWatcher's business, not ours.
+        if (chatEmpty)
         {
             this.committedShadow = string.Empty;
             this.lastSeenPendingResults = string.Empty;
-            this.imeTracker.ClearPeekResults();
-
-            var sinceEnd = this.imeTracker.TimeSinceCompositionEnded;
-            var insertStale = !this.imeTracker.HasPendingInsert
-                              || sinceEnd == Timeout.InfiniteTimeSpan
-                              || sinceEnd > TimeSpan.FromMilliseconds(500);
-            if (insertStale)
-                this.imeTracker.ClearPendingCommits();
+            if (!this.imeTracker.IsComposing)
+                this.imeTracker.ClearPreviewResults();
 
             return;
         }
 
-        if (chatEmpty && this.imeTracker.IsComposing)
-        {
-            // First syllable on an empty line: show COMPSTR only, no stale committed text.
-            this.committedShadow = string.Empty;
-            this.lastSeenPendingResults = string.Empty;
-            return;
-        }
-
-        // Peek only — ChatInputWatcher may Consume / InsertText separately.
+        // Peek only — ChatInputWatcher owns the separate insert channel.
         var pending = this.imeTracker.PeekCommittedResults();
         if (string.IsNullOrEmpty(pending))
         {
@@ -225,16 +180,25 @@ internal sealed class ChatPreviewOverlay : IDisposable
         this.committedShadow = raw;
     }
 
-    private void ClearPreviewLifecycle()
+    private void ResetShadow()
     {
         this.committedShadow = string.Empty;
         this.lastSeenPendingResults = string.Empty;
-        this.imeTracker.ClearPendingCommits();
+        this.imeTracker.ClearPreviewResults();
     }
+
+    /// <summary>
+    /// A buffer we cannot read as text: genuinely empty, or the '=' soup the game puts
+    /// in RawString for glyphs AXIS cannot render.
+    /// </summary>
+    private static bool IsBufferBlank(string raw)
+        => string.IsNullOrEmpty(raw) || ChatBufferHeuristics.IsMostlyEqualsNoise(raw);
 
     private string BuildPreview()
     {
-        var convertedCommitted = KanjiConverter.ConvertAll(
+        // ConvertChatLine, not ConvertAll: a "/p ..." line shows its command token
+        // verbatim and its message body converted, matching what will actually be sent.
+        var convertedCommitted = KanjiConverter.ConvertChatLine(
             this.committedShadow,
             this.phraseService,
             this.mapService.Active);
@@ -287,37 +251,5 @@ internal sealed class ChatPreviewOverlay : IDisposable
                 tk.AddDalamudDefaultFont(18);
             });
         });
-    }
-
-    private static unsafe bool TryGetInputScreenRect(
-        AtkComponentTextInput* input,
-        out float x,
-        out float y,
-        out float width,
-        out float height)
-    {
-        x = y = width = height = 0;
-        var owner = input->AtkComponentInputBase.OwnerNode;
-        if (owner == null)
-            return false;
-
-        var node = (AtkResNode*)owner;
-        x = node->ScreenX;
-        y = node->ScreenY;
-        width = node->Width * Math.Max(node->ScaleX, 0.01f);
-        height = node->Height * Math.Max(node->ScaleY, 0.01f);
-        return width > 1f && height > 1f;
-    }
-
-    private static unsafe string GetTextInputString(AtkComponentTextInput* input)
-    {
-        if (input == null)
-            return string.Empty;
-
-        var raw = input->AtkComponentInputBase.RawString.ToString();
-        if (!string.IsNullOrEmpty(raw))
-            return raw;
-
-        return input->AtkComponentInputBase.EvaluatedString.ToString();
     }
 }

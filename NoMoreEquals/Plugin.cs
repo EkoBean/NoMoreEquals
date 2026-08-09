@@ -23,7 +23,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
 
     private readonly AxisFontCoverage fontCoverage = new();
-    private readonly ImeCompositionTracker imeTracker = new();
+    private readonly ChatInputAccessor chatAccessor;
+    private readonly ChatImeGate imeGate;
+    private readonly ImeCompositionTracker imeTracker;
     private readonly ChatInputWatcher chatWatcher;
     private readonly ChatPreviewOverlay chatPreview;
     private readonly WindowSystem windowSystem = new("NoMoreEquals");
@@ -42,12 +44,16 @@ public sealed class Plugin : IDalamudPlugin
         this.fontCoverage.TryLoad(DataManager, Log);
         this.RebuildAll();
 
+        this.chatAccessor = new ChatInputAccessor(GameGui);
+        this.imeGate = new ChatImeGate(this.chatAccessor);
+        this.imeTracker = new ImeCompositionTracker(this.imeGate);
+
         this.chatWatcher = new ChatInputWatcher(
             this.Configuration,
             this.MapService,
             this.PhraseService,
+            this.chatAccessor,
             Framework,
-            GameGui,
             Log,
             this.imeTracker);
 
@@ -55,7 +61,7 @@ public sealed class Plugin : IDalamudPlugin
             this.Configuration,
             this.MapService,
             this.PhraseService,
-            GameGui,
+            this.chatAccessor,
             this.imeTracker,
             PluginInterface);
 
@@ -86,6 +92,9 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= this.OnDraw;
         PluginInterface.UiBuilder.OpenConfigUi -= this.ToggleConfigUi;
 
+        // Close the gate first: every message-layer handler reads it, so this stops
+        // the window procedure doing any work while the rest is torn down.
+        this.imeGate.Close();
         this.chatWatcher.Dispose();
         this.chatPreview.Dispose();
         this.imeTracker.Dispose();
@@ -97,6 +106,10 @@ public sealed class Plugin : IDalamudPlugin
 
     private void OnDraw()
     {
+        // Single evaluation point for the IME gate, before anything else draws:
+        // ImGui's WantTextInput is only authoritative inside the ImGui frame.
+        this.imeGate.Update();
+
         this.windowSystem.Draw();
         this.chatPreview.Draw();
     }
@@ -108,7 +121,7 @@ public sealed class Plugin : IDalamudPlugin
             this.fontCoverage.TryLoad(DataManager, Log);
 
         this.MapService.Rebuild(this.Configuration, this.fontCoverage);
-        this.PhraseService.Rebuild(this.Configuration);
+        this.PhraseService.Rebuild(this.Configuration.PhraseReplacements);
         Log.Information(
             $"NoMoreEquals rebuilt. Glyphs={this.MapService.ActiveCount}, phrases={this.PhraseService.EnabledCount}");
     }
