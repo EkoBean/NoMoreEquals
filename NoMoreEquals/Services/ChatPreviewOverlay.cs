@@ -75,13 +75,16 @@ internal sealed class ChatPreviewOverlay : IDisposable
             var raw = ChatInputAccessor.GetText(input);
             this.UpdateShadow(raw);
 
-            // The shadow, not raw: the shadow is the string that would actually be drawn,
-            // and raw is the one that fills with '=' noise during composition.
+            // Raw, not the shadow. The '=' noise that makes raw untrustworthy elsewhere
+            // cannot reach the part this question depends on — the leading "/token " is
+            // ASCII the game renders fine — whereas the shadow is blanked outright once
+            // IsBufferBlank trips, and ChatLineScope reads an empty line as convertible.
+            // That combination drew a preview over "/ac" plus four CJK characters.
             //
             // Deliberately no ResetShadow() here. The shadow has to keep tracking the
             // buffer while the preview is withheld, so that deleting the "/gearset "
             // brings the preview back on the same frame instead of flickering.
-            if (!this.gate.ShouldConvert(this.committedShadow))
+            if (!this.gate.ShouldConvert(raw))
                 return;
 
             var preview = this.BuildPreview();

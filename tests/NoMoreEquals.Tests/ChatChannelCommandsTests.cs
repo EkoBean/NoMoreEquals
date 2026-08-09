@@ -37,9 +37,21 @@ public class ChatChannelCommandsTests
     [InlineData("l")]
     [InlineData("cwlinkshell")]
     [InlineData("cwl")]
-    public void IsChatChannel_AcceptsEveryChatChannelToken(string token)
+    public void IsChatChannel_AcceptsTheUnnumberedChannelTokens(string token)
     {
         Assert.True(ChatChannelCommands.IsChatChannel(token));
+    }
+
+    /// <summary>
+    /// Pins the size, because the two directions are not equally dangerous. A dropped
+    /// token already fails the tests around this one; an added token widens what the
+    /// plugin rewrites and would otherwise land in silence. Changing this number means
+    /// the design doc's table changes with it — and that an entry got a source.
+    /// </summary>
+    [Fact]
+    public void Count_MatchesTheDocumentedWhitelistSize()
+    {
+        Assert.Equal(60, ChatChannelCommands.Count);
     }
 
     /// <summary>

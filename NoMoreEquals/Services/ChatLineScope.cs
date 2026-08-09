@@ -14,12 +14,19 @@ namespace NoMoreEquals.Services;
 /// <param name="Convertible">False means the plugin does not act on this line at all.</param>
 /// <param name="BodyStart">
 /// Index the convertible part starts at: 0 for an ordinary line, just past the command
-/// token's trailing space for a chat channel command. Meaningless when
+/// token's trailing space for a chat channel command, and -1 when
 /// <paramref name="Convertible"/> is false.
+/// <para>
+/// -1 rather than 0, so that the value carried by a blocked line is not a usable index.
+/// 0 means "convert from the start", so a caller that read this without checking
+/// <paramref name="Convertible"/> would convert a whole /gearset line — exactly the
+/// half-an-answer mistake this type exists to make unrepresentable. Out of range, that
+/// mistake throws instead.
+/// </para>
 /// </param>
 internal readonly record struct ChatLineScope(bool Convertible, int BodyStart)
 {
-    private static readonly ChatLineScope Blocked = new(false, 0);
+    private static readonly ChatLineScope Blocked = new(false, -1);
     private static readonly ChatLineScope WholeLine = new(true, 0);
 
     public static ChatLineScope Of(string? line)

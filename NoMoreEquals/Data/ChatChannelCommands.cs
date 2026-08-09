@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 
 namespace NoMoreEquals.Data;
@@ -21,8 +22,14 @@ namespace NoMoreEquals.Data;
 /// </summary>
 internal static class ChatChannelCommands
 {
-    private static readonly HashSet<string> Tokens =
-        new(StringComparer.OrdinalIgnoreCase)
+    /// <summary>
+    /// Frozen, not a plain <see cref="HashSet{T}"/>: this set is read from both the window
+    /// procedure's thread and the render thread and is never written after startup, so the
+    /// immutability the readers rely on is worth stating in the type rather than leaving
+    /// to convention. Faster lookups come free with it.
+    /// </summary>
+    private static readonly FrozenSet<string> Tokens =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "say", "s",
             "yell", "y",
@@ -54,7 +61,14 @@ internal static class ChatChannelCommands
             "cwlinkshell6", "cwl6",
             "cwlinkshell7", "cwl7",
             "cwlinkshell8", "cwl8",
-        };
+        }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// How many tokens the whitelist holds. Exposed so a test can pin it: a token that
+    /// goes missing already breaks the plugin visibly, but a token added without a source
+    /// widens what gets rewritten and would otherwise land in silence.
+    /// </summary>
+    public static int Count => Tokens.Count;
 
     /// <summary>
     /// Whether <paramref name="token"/> — a command name with its leading '/' already

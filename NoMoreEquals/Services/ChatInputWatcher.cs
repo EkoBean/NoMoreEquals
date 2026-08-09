@@ -120,7 +120,10 @@ internal sealed class ChatInputWatcher : IDisposable
 
     private string? TryRewriteResult(string result)
     {
-        if (!this.imeTracker.AcceptChatIme)
+        // IsArmed ahead of the buffer read: GetActiveText below costs an addon lookup and
+        // a SeString marshal, and there is no reason to pay either when the player has no
+        // rules left. ShouldConvert re-checks it; that is three property reads.
+        if (!this.imeTracker.AcceptChatIme || !this.gate.IsArmed)
             return null;
 
         // The gate is asked about the whole line, but the conversion runs on the chunk

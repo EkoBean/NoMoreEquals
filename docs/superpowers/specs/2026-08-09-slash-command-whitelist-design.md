@@ -51,7 +51,9 @@
 
 ### 刻意不特別處理
 
-- **`tell` 的收件人 token。** 語法是 `/tell 名 姓@World 訊息`，照規則會連玩家名稱一起送進轉換。實務上無害：FFXIV 玩家名稱只有英文字母，而本外掛的置換邏輯（中文→日文漢字字形、使用者自訂片語）不會命中純英文。
+- **`tell` 的收件人 token。** 語法是 `/tell 名 姓@World 訊息`，照規則會連玩家名稱一起送進轉換。字形層無害：FFXIV 玩家名稱只有英文字母，而字形對照表是中文→日文漢字，不可能命中純英文。
+
+  片語層則不然。自訂片語是使用者自己寫的自由文字，一條 `From = "Alt"` 的規則會把 `/tell Alt Ego@World` 的收件人改掉。這一點不寫程式處理：真正的解法是限制片語來源側不得為純 ASCII，那是另一份 spec 的事（見「範圍之外」），在這裡加一個 `/tell` 特例只會是繞路。
 
 ## 架構
 
@@ -79,9 +81,11 @@ internal readonly record struct ChatLineScope(bool Convertible, int BodyStart)
 | 輸入 | 結果 |
 |---|---|
 | `你好` | `(true, 0)` |
-| `/p` | `(false, 0)` |
+| `/p` | `(false, -1)` |
 | `/p 你好` | `(true, 3)` |
-| `/gearset change 1` | `(false, 0)` |
+| `/gearset change 1` | `(false, -1)` |
+
+被擋下時 `BodyStart` 是 **-1 而非 0**。0 的意思是「從頭開始轉換」—— 讓被擋的行帶著這個值，等於讓「只讀 `BodyStart` 沒讀 `Convertible`」的呼叫端去轉換整行 `/gearset`，正是這個型別要消滅的那種「只拿到半個答案」的錯誤。改成越界值，同樣的誤用會直接丟例外。
 
 取代目前的 `KanjiConverter.GetChatBodyStart` 與 `KanjiConverter.IsInsideCommandToken`。這兩個述詞必須成對呼叫、又可能各自答錯，正是它們得在三處各寫一遍的原因；合成單一型別後，呼叫端拿到的答案不可能自相矛盾。
 
@@ -150,13 +154,13 @@ if (!this.gate.ShouldConvert(text)) return;       // 新增：讀到行內容才
 ```csharp
 if (!this.gate.IsArmed || !this.configuration.ShowChatPreviewOverlay) return;
 // ... 取得 input、rect、raw ...
-this.UpdateShadow(raw);                                        // 照常執行
-if (!this.gate.ShouldConvert(this.committedShadow)) return;    // 不繪製，但不重設影子
+this.UpdateShadow(raw);                          // 照常執行
+if (!this.gate.ShouldConvert(raw)) return;       // 不繪製，但不重設影子
 ```
 
 兩個決定：
 
-- **判斷對象是 `committedShadow` 而非 `raw`。** 影子才是真正會被繪製的字串；`raw` 是會冒 `=` 雜訊的那個。
+- **判斷對象是 `raw` 而非 `committedShadow`。** 本設計最初選了影子，理由是「影子才是真正會被繪製的字串」—— 那個理由對這個問題是錯的。白名單只取決於開頭的 `/token ` 前綴，那段是純 ASCII，正好是 `=` 雜訊碰不到的部分（邊界表的 `/p ===` 那列就是這個論證）。反過來影子有 `raw` 沒有的失效模式：`UpdateShadow` 在 `IsBufferBlank(raw)` 成立時會把 `committedShadow` 清成空字串，而 `ChatLineScope.Of("")` 判定為可轉換 —— 於是 `/ac ` 加四個以上中文字（`=` 密度跨過 `IsMostlyEqualsNoise` 門檻）就會在一個被擋的指令上畫出 preview。改成問 `raw` 消除這個漏洞。
 - **被擋下時不呼叫 `ResetShadow()`。** 影子必須繼續同步，玩家刪掉 `/gearset ` 的當下 preview 才能在同一幀正確出現。重設會製造閃爍。
 
 ## 安全性質：閘門只在入口，不在投遞路徑
@@ -200,7 +204,7 @@ if (!this.gate.ShouldConvert(this.committedShadow)) return;    // 不繪製，�
 這是刻意接受的：`ConversionGate` 只有三行組合邏輯（三個 property 讀取加一次委派），會出錯的東西全在 `ChatLineScope` 與 `ChatChannelCommands` 裡，而那兩個是純函式、零 Dalamud 依賴、可以測到滿。為了讓一個三行的類別可測而把 `Configuration` 換成 `Func<bool>` 注入，是為儀式付錢。
 
 - **`ChatLineScopeTests`**（新）—— 上方邊界表逐列一個 `[InlineData]`，同時驗證 `Convertible` 與 `BodyStart`。
-- **`ChatChannelCommandsTests`**（新）—— 60 個 token 全數命中；`linkshell1`–`8`、`l1`–`8`、`cwlinkshell1`–`8`、`cwl1`–`8` 四個編號家族完整（防手打漏字）；`gearset`、`nme`、`quickchat`、`qchat`、`beginner`、`cwls1` 確實落空。
+- **`ChatChannelCommandsTests`**（新）—— 60 個 token 全數命中；`linkshell1`–`8`、`l1`–`8`、`cwlinkshell1`–`8`、`cwl1`–`8` 四個編號家族完整（防手打漏字）；`gearset`、`nme`、`quickchat`、`qchat`、`beginner`、`cwls1` 確實落空。另外釘住集合大小為 60：兩個方向的危險程度不對等 —— 少一個 token 上面那些測試就會紅，多一個 token 卻會擴大外掛改寫的範圍且悄無聲息。要改這個數字就得連同上方表格一起改，也就等於逼出「這個新條目的來源是什麼」。
 - **`KanjiConverterTests`**（改）—— 刪除 `GetChatBodyStart_*` 與 `IsInsideCommandToken_*` 兩組；新增 `ConvertChatLine_LeavesNonChatCommandAlone`（`/gearset 綠` 原樣回傳）；保留 `ConvertChatLine_ConvertsCommandArgumentsButNotTheCommand`、`ConvertChatLine_ConvertsAnOrdinaryLineWhole`、`ConvertChatLine_AppliesPhrasesBeforeGlyphs`。
 
 ## 範圍之外

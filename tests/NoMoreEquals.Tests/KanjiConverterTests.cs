@@ -46,9 +46,11 @@ public class KanjiConverterTests
     [Fact]
     public void ConvertChatLine_LeavesABareCommandTokenAlone()
     {
-        // No space yet, so every character still belongs to the command itself.
+        // No separator yet, so the line is not convertible at all.
         Assert.Equal("/" + Green, ConvertLine("/" + Green));
         Assert.Equal("/p", ConvertLine("/p"));
+
+        // Separator typed, whitelist hit, but the body is still empty.
         Assert.Equal("/p ", ConvertLine("/p "));
     }
 

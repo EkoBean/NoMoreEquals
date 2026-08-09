@@ -29,6 +29,20 @@ public class ChatLineScopeTests
         Assert.False(ChatLineScope.Of(line).Convertible);
     }
 
+    /// <summary>
+    /// -1, not 0: a blocked line's <c>BodyStart</c> must not be a usable index. 0 means
+    /// "convert from the start", so a caller that read it without checking
+    /// <c>Convertible</c> would convert the whole /gearset line — the exact half-an-answer
+    /// bug this type exists to make unrepresentable.
+    /// </summary>
+    [Theory]
+    [InlineData("/p")]
+    [InlineData("/gearset change 1")]
+    public void Of_BlockedLine_HasNoUsableBodyStart(string line)
+    {
+        Assert.Equal(new ChatLineScope(false, -1), ChatLineScope.Of(line));
+    }
+
     [Theory]
     [InlineData("/p ", 3)]
     [InlineData("/p 綠", 3)]

@@ -36,7 +36,7 @@ internal sealed class ConversionGate
     /// <summary>Conversion is switched on and at least one rule could fire.</summary>
     public bool IsArmed
         => this.configuration.Enabled
-           && (this.mapService.Active.Count > 0 || this.phraseService.EnabledCount > 0);
+           && (this.mapService.ActiveCount > 0 || this.phraseService.EnabledCount > 0);
 
     /// <summary>
     /// <see cref="IsArmed"/>, and <paramref name="line"/> is one the plugin is allowed to
