@@ -51,12 +51,19 @@ internal sealed class ConfigWindow : Window
             this.context.Save();
         }
 
-        var showPreview = config.ShowChatPreviewOverlay;
-        if (ImGui.Checkbox(t.ShowChatPreviewOverlay, ref showPreview))
-        {
-            config.ShowChatPreviewOverlay = showPreview;
-            this.context.Save();
-        }
+        // TEMPORARY — the overlay is still being worked on, so its switch is shown off and
+        // locked. Delete this block and uncomment the one below to turn it back on.
+        var showPreview = false;
+        ImGui.BeginDisabled();
+        ImGui.Checkbox($"{t.ShowChatPreviewOverlay} (WIP)", ref showPreview);
+        ImGui.EndDisabled();
+
+        // var showPreview = config.ShowChatPreviewOverlay;
+        // if (ImGui.Checkbox(t.ShowChatPreviewOverlay, ref showPreview))
+        // {
+        //     config.ShowChatPreviewOverlay = showPreview;
+        //     this.context.Save();
+        // }
 
         ImGui.TextDisabled(string.Format(
             t.StatusCounts,
