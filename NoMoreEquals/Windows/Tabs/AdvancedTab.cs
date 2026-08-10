@@ -45,7 +45,9 @@ internal sealed class AdvancedTab
         if (ImGui.Button(t.RebuildFromFont))
             this.context.Plugin.RebuildAll();
 
-        // Same dismissal rule as the Main tab's errors: any click clears the last result.
+        // Same dismissal rule as the Main tab's errors: any mouse press clears the last
+        // result. ImGui activates a button on release, so the press that begins a click on
+        // Restore clears the old message a frame before the release raises a new one.
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
             this.restoreMessage = string.Empty;
 
