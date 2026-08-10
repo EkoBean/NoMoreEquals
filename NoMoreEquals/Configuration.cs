@@ -14,7 +14,7 @@ public class Configuration : IPluginConfiguration
     public int Version { get; set; } = CurrentVersion;
 
     /// <summary>Latest on-disk schema version understood by this build.</summary>
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
 
     /// <summary>When false, chat input is left unchanged.</summary>
     public bool Enabled { get; set; } = true;
@@ -66,6 +66,7 @@ public class Configuration : IPluginConfiguration
     {
         this.CustomMappings ??= new Dictionary<string, string>();
         this.SeededDefaultGlyphKeys ??= [];
+        this.SeededDefaultPhraseKeys ??= [];
         this.PhraseReplacements ??= [];
         this.PhraseReplacements.RemoveAll(p => p is null);
         this.Version = CurrentVersion;
