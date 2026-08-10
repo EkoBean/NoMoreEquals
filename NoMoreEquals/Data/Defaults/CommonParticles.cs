@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace NoMoreEquals.Data.DefaultMissingGlyphs;
+namespace NoMoreEquals.Data.Defaults;
 
 /// <summary>
 /// High-frequency particles / sentence endings that AXIS lacks,

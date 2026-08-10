@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace NoMoreEquals.Data.DefaultMissingGlyphs;
+namespace NoMoreEquals.Data.Defaults;
 
 /// <summary>
 /// Shipped missing-glyph defaults that are <b>not</b> OpenCC/variant pairs.
@@ -11,7 +11,7 @@ namespace NoMoreEquals.Data.DefaultMissingGlyphs;
 /// then append its <c>Entries</c> to <see cref="Modules"/>.
 /// </para>
 /// </summary>
-internal static class DefaultMissingGlyphMaps
+internal static class DefaultGlyphMaps
 {
     /// <summary>
     /// Curated packs. Append new module <c>Entries</c> here when adding defaults.

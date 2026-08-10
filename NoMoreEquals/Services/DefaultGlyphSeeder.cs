@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using NoMoreEquals.Data.DefaultMissingGlyphs;
+using NoMoreEquals.Data.Defaults;
 
 namespace NoMoreEquals.Services;
 
@@ -19,7 +19,7 @@ internal static class DefaultGlyphSeeder
         var alreadySeeded = new HashSet<string>(config.SeededDefaultGlyphKeys);
         var changed = false;
 
-        foreach (var (from, to) in DefaultMissingGlyphMaps.Entries)
+        foreach (var (from, to) in DefaultGlyphMaps.Entries)
         {
             var key = from.ToString();
             if (!alreadySeeded.Add(key))
