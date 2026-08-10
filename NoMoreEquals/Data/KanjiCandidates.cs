@@ -419,5 +419,7 @@ internal static class KanjiCandidates
         ['\u9F61'] = '\u9F62', // 齡 -> 齢
         ['\u9F8D'] = '\u7ADC', // 龍 -> 竜
         ['\u9F9C'] = '\u4E80', // 龜 -> 亀
+        ['\u5E6B'] = '\u5E47', // 幫 -> 幇
+
     };
 }
