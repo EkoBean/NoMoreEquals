@@ -36,7 +36,10 @@ public sealed class Plugin : IDalamudPlugin
     {
         this.ConfigService = new ConfigService(PluginInterface);
 
-        if (DefaultGlyphSeeder.SeedInto(this.Configuration))
+        // Both run: | not || so the phrase pass is never short-circuited away.
+        var seeded = DefaultGlyphSeeder.SeedInto(this.Configuration)
+                     | DefaultPhraseSeeder.SeedInto(this.Configuration);
+        if (seeded)
             this.ConfigService.Save();
 
         I18n.Apply(PluginInterface.UiLanguage);
