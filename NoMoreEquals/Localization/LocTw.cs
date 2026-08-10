@@ -40,6 +40,9 @@ internal static class LocTw
             "若更換字體包更新才需重建對照。",
         UseLiveFontFilter = "依目前遊戲字體過濾缺字對照",
         RebuildFromFont = "重新讀取遊戲字體並重建對照",
+        RestoreDefaults = "加入缺少的預設條目",
+        RestoreDefaultsDone = "已加入 {0} 筆。",
+        RestoreDefaultsNothing = "沒有可加入的項目，預設條目都在。",
         AdvancedOverviewHelp =
             "展開下方區塊，可瀏覽此外掛目前載入的全部替代詞彙與缺字對照。",
         AdvancedPhraseOverview = "替代詞彙（{0}）",

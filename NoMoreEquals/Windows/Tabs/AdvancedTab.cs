@@ -19,6 +19,9 @@ internal sealed class AdvancedTab
 
     private readonly ConfigWindowContext context;
 
+    /// <summary>Result of the last restore click, or empty. Cleared on any mouse press.</summary>
+    private string restoreMessage = string.Empty;
+
     public AdvancedTab(ConfigWindowContext context)
     {
         this.context = context;
@@ -41,6 +44,31 @@ internal sealed class AdvancedTab
         // the rebuild and already say what happened.
         if (ImGui.Button(t.RebuildFromFont))
             this.context.Plugin.RebuildAll();
+
+        // Same dismissal rule as the Main tab's errors: any click clears the last result.
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+            this.restoreMessage = string.Empty;
+
+        if (ImGui.Button(t.RestoreDefaults))
+        {
+            var before = config.CustomMappings.Count + config.PhraseReplacements.Count;
+
+            // | not ||: both passes must run.
+            var added = DefaultGlyphSeeder.RestoreAll(config)
+                        | DefaultPhraseSeeder.RestoreAll(config);
+
+            var delta = config.CustomMappings.Count + config.PhraseReplacements.Count - before;
+
+            this.restoreMessage = delta > 0
+                ? string.Format(t.RestoreDefaultsDone, delta)
+                : t.RestoreDefaultsNothing;
+
+            if (added)
+                this.context.ApplyAndSave();
+        }
+
+        if (this.restoreMessage.Length > 0)
+            UiHelpers.StatusText(this.restoreMessage);
 
         ImGui.Spacing();
         ImGui.Separator();

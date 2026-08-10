@@ -58,6 +58,12 @@ internal sealed class UiStrings
 
     public required string RebuildFromFont { get; init; }
 
+    public required string RestoreDefaults { get; init; }
+
+    public required string RestoreDefaultsDone { get; init; }
+
+    public required string RestoreDefaultsNothing { get; init; }
+
     public required string AdvancedOverviewHelp { get; init; }
 
     public required string AdvancedPhraseOverview { get; init; }

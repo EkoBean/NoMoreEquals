@@ -39,6 +39,9 @@ internal static class LocEn
             "Rebuild if you change your font package.",
         UseLiveFontFilter = "Filter glyph map using the current game font",
         RebuildFromFont = "Reload game font and rebuild glyph map",
+        RestoreDefaults = "Add missing default entries",
+        RestoreDefaultsDone = "Added {0} entr(y/ies).",
+        RestoreDefaultsNothing = "Nothing to add — all defaults are already present.",
         AdvancedOverviewHelp =
             "Expand the sections below to browse every phrase and glyph mapping currently loaded by the plugin.",
         AdvancedPhraseOverview = "Custom phrases ({0})",
