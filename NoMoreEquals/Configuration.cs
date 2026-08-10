@@ -44,6 +44,13 @@ public class Configuration : IPluginConfiguration
     public List<string> SeededDefaultGlyphKeys { get; set; } = [];
 
     /// <summary>
+    /// Curated default phrase keys (the <c>From</c> side) already offered to this install.
+    /// Mirrors <see cref="SeededDefaultGlyphKeys"/>: prevents re-adding a default the user
+    /// deleted, while still allowing newly shipped defaults to be seeded on upgrade.
+    /// </summary>
+    public List<string> SeededDefaultPhraseKeys { get; set; } = [];
+
+    /// <summary>
     /// User phrase / wording replacements (e.g. 你→尼, 懂→明白).
     /// Applied before single-character glyph conversion.
     /// </summary>
