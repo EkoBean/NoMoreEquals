@@ -16,5 +16,5 @@
     "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg01.png",
     "https://raw.githubusercontent.com/EkoBean/NoMoreEquals/master/docs/images/exampleimg02.png"
   ],
-  "Changelog": "Change the IME inputting experience, no more hidding text when typing the replacing text.\\n改善IME輸入體驗，替換文字時不會再隱藏文字。"
+  "Changelog": "Provideing more default setting, and \"add missing default entries\" button. 提供更多的預設字詞片語，以及新增\"加入缺少的預設條目\"按鈕。Expand gylph data."
 }
