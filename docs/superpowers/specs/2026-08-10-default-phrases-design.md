@@ -53,7 +53,7 @@ NoMoreEquals/Data/Defaults/
 
 `DefaultPhraseMaps` 的形狀比照 `DefaultGlyphMaps`：一份 `Modules` 清單、一個 `Merge`、保留 `from != to` 的防呆。維持「寫一個模組、加進 `Modules`」的既有流程。
 
-`CommonPhrases` 初始內容為 咖啡 → 珈琲。
+`CommonPhrases` 初始內容為 咖啡 → 珈琲。此條目已定案，不需驗證 AXIS 覆蓋率。
 
 ### Configuration
 
@@ -126,8 +126,26 @@ Advanced 分頁一顆按鈕，一次跑兩類，回報加入筆數（「已加�
 - `Windows/Tabs/AdvancedTab.cs`：按鈕
 - `Localization/UiStrings.cs`、`LocEn.cs`、`LocTw.cs`：按鈕與結果訊息字串
 
-## 待實作時確認
+## 測試環境限制
 
-**咖啡 是否真為缺字。** 咖（U+5496）、啡（U+5561）都是常見 CJK 統一漢字，而 `KanjiMap.cs` 由實際 AXIS 覆蓋率產生，其中只有異體字配對。若 咖啡 實際可渲染，則 珈琲 屬風格偏好而非缺字修復，`CommonPhrases` 的類別註解應據此措辭。實作時以 `tools/FontProbe` 驗證。
+`Configuration` 實作 Dalamud 的 `IPluginConfiguration`，**在測試專案中無法建構** —— 一經實體化即拋出 `FileNotFoundException: Could not load file or assembly 'Dalamud'`，因為測試環境沒有 Dalamud。此點已於 2026-08-10 以探測測試實證。
 
-此問題不影響任何機制，僅影響註解與模組定位的描述。
+因此 seeder 的核心邏輯**不得**以 `Configuration` 為參數，須改收它實際需要的資料：
+
+```csharp
+// 核心邏輯，Dalamud-free，測試直接呼叫
+public static bool Seed(
+    List<PhraseReplacement> phrases,
+    List<string> seededKeys,
+    bool ignoreSeededKeys);
+
+// 薄包裝，正式程式碼用，測試不碰
+public static bool SeedInto(Configuration config);
+public static bool RestoreAll(Configuration config);
+```
+
+`ignoreSeededKeys` 恰好對應「兩條種入路徑」那張表的差異，一個參數表達完畢。
+
+這不是為測試而扭曲設計，而是套用專案既有慣例 —— `PhraseReplacementService.Rebuild` 的註解已明載相同理由：「Takes the rules rather than the whole `Configuration` so this stays independent of Dalamud's `IPluginConfiguration` and can be exercised directly」。
+
+`DefaultGlyphSeeder` 加 `RestoreAll` 時套用同一拆法，順帶使其可測。
