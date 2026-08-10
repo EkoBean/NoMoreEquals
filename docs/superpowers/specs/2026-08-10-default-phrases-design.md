@@ -7,10 +7,7 @@
 
 `CommonParticles` 讓 missing-glyph mapping 一開始就有幾筆可用的預設（啊→阿、嗎→嘛、喔→哦），由 `DefaultGlyphSeeder` 在啟動時種進 `Configuration.CustomMappings`。Custom phrases 沒有對應的東西 —— 使用者第一次打開設定視窗，片語清單是空的。
 
-兩個缺口：
-
-1. **預設片語不存在。** 多字詞的替換（咖啡→珈琲）沒有出貨管道，每個使用者都要自己從零打。
-2. **被刪掉的預設救不回來。** `SeededDefaultGlyphKeys` 的設計刻意讓刪掉的預設不復活，但沒有任何手段可以反悔。誤刪就是永久的，除非手改 `NoMoreEquals.json`。
+要做兩件事：讓多字詞的預設（咖啡→珈琲）也有出貨管道，以及提供一顆按鈕，把維護者日後新增的預設條目補進既有使用者的清單。
 
 ## 需求
 
