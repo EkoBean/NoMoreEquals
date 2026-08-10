@@ -12,5 +12,6 @@ internal static class CommonParticles
     {
         ['\u554A'] = '\u963F', // 啊 -> 阿
         ['\u55CE'] = '\u561B', // 嗎 -> 嘛
+        ['\u5594'] = '\u54E6', // 喔 -> 哦
     };
 }

@@ -104,6 +104,7 @@ internal static class KanjiMap
         ['\u9EB5'] = '\u9EBA', // 麵 -> 麺
         ['\u9EC3'] = '\u9EC4', // 黃 -> 黄
         ['\u9ED1'] = '\u9ED2', // 黑 -> 黒
+        ['\u5E6B'] = '\u5E47', // 幫 -> 幇
     };
 }
 
